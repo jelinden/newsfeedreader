@@ -3,7 +3,19 @@
 <head>
 </head>
 <body>
-{{.}}
+    <div id="news-container">
+       {{ range .news }}
+       <ul>
+           <li class="first">
+               <div class="source">{{ .RssSource }}</div>
+               <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div>
+               <div class="category">
+                   <a href="{{ .RssLink }}">{{ .RssTitle }}</a>
+               </div>
+            </li>
+       </ul>
+       {{end}}
+   </div>
 </body>
 </html>
 {{end}}

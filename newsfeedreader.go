@@ -73,14 +73,14 @@ func main() {
 	}
 	e.SetRenderer(t)
 	e.Get("/fi", func(c *echo.Context) error {
-		return renderer("index_fi", c)
+		return app.renderer("index_fi", c)
 	})
 
 	e.Run(":1300")
 }
 
-func renderer(page string, c *echo.Context) error {
-	return c.Render(http.StatusOK, page, "test")
+func (a *Application) renderer(page string, c *echo.Context) error {
+	return c.Render(http.StatusOK, page, a.Sessions.FetchRssItems("fi"))
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}) error {

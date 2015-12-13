@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/jelinden/newsfeedreader/domain"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -35,11 +36,11 @@ func (s *Sessions) createSession(url string) *mgo.Session {
 	return session
 }
 
-func (s *Sessions) FetchRssItems(lang int) map[string]interface{} {
+func (s *Sessions) FetchRssItems(lang string) map[string]interface{} {
 	result := []domain.RSS{}
 	sess := s.Mongo.Clone()
-	c := sess.DB("uutispuro").C("rss")
-	err := c.Find(bson.M{"language": lang}).Sort("-date").Limit(30).All(&result)
+	c := sess.DB("news").C("newscollection")
+	err := c.Find(bson.M{"language": lang}).Sort("-pubDate").Limit(30).All(&result)
 	if err != nil {
 		fmt.Println("Fatal error " + err.Error())
 	}

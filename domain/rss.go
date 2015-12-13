@@ -2,28 +2,29 @@ package domain
 
 import (
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 type RSS struct {
 	Id        bson.ObjectId `json:"id" bson:"_id"`
-	RssTitle  string
-	RssLink   string
-	PubDate   time.Time
-	RssSource string
-	RssClicks int64
-	Language  String
-	Category  Category
-	RssFeed   RssFeed
+	RssTitle  string        `json:"rssTitle" bson:"rssTitle"`
+	RssLink   string        `json:"rssLink" bson:"rssLink"`
+	PubDate   time.Time     `json:"pubDate" bson:"pubDate"`
+	RssSource string        `json:"rssSource" bson:"rssSource"`
+	RssClicks int64         `json:"rssClicks" bson:"rssClicks"`
+	Language  string        `json:"language" bson:"language"`
+	Category  Category      `json:"category" bson:"category"`
+	RssFeed   RssFeed       `json:"rssFeed" bson:"rssFeed"`
 }
 
 type Category struct {
 	Id           bson.ObjectId `json:"id" bson:"_id"`
-	CategoryName string
+	CategoryName string        `json:"categoryName" bson:"categoryName"`
 }
 
 type RssFeed struct {
 	Id        bson.ObjectId `json:"id" bson:"_id"`
-	Url       string
-	SiteUrl   String
-	FeedTitle String
+	Url       string        `json:"url" bson:"url"`
+	SiteUrl   string        `json:"siteUrl" bson:"siteUrl"`
+	FeedTitle string        `json:"feedTitle" bson:"feedTitle"`
 }
