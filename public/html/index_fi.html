@@ -1,21 +1,26 @@
-{{define "index_fi"}}
-<html>
+{{define "index_fi"}}<html>
 <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=yes" />
+    <title>newsfeedreader</title>
+    <link rel="stylesheet" type="text/css" href="/public/css/uutispuro.css" />
 </head>
 <body>
     <div id="news-container">
        {{ range .news }}
-       <ul>
-           <li class="first">
-               <div class="source">{{ .RssSource }}</div>
-               <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div>
-               <div class="category">
-                   <a href="{{ .RssLink }}">{{ .RssTitle }}</a>
-               </div>
-            </li>
-       </ul>
+            <div class="item">
+                <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
+			 --><div class="source">{{ .RssSource }}</div><!--
+		  	 --><div class="category">{{ .Category.CategoryName }}</div>
+                <div class="link">
+                   <a target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>
+                </div>
+           </div>
        {{end}}
    </div>
+   <script src="/public/js/socket.io.js" type="application/javascript"></script>
+   <script src="/public/js/moment.min.js" type="application/javascript"></script>
+   <script src="/public/js/uutispuro.js" type="application/javascript"></script>
 </body>
 </html>
 {{end}}

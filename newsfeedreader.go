@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 
+	"encoding/json"
+	"github.com/googollee/go-socket.io"
 	"github.com/jelinden/newsfeedreader/service"
 	"github.com/jelinden/newsfeedreader/util"
-	"github.com/labstack/echo"
-	mw "github.com/labstack/echo/middleware"
-	"github.com/thoas/stats"
+	"time"
 )
 
 type (
@@ -42,47 +42,61 @@ func main() {
 	app.Init()
 	defer app.Close()
 
-	e := echo.New()
+	server, err := socketio.NewServer(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	server.On("connection", func(so socketio.Socket) {
+		so.Join("news")
 
-	e.Get("/", func(c *echo.Context) error {
-		lang, err := c.Request().Cookie("uutispuroLang")
-		if err != nil {
-			log.Println(err)
-			c.Redirect(302, "/en")
-		} else if lang.Value == "fi" {
-			c.Redirect(302, "/fi")
-		} else {
-			c.Redirect(302, "/en")
+		for _ = range time.Tick(10 * time.Second) {
+			news, err := json.Marshal(app.Sessions.FetchRssItems("fi"))
+			if err != nil {
+				log.Println(err.Error())
+			} else {
+				so.BroadcastTo("news", "message", string(news))
+			}
 		}
-		return nil
+		so.On("disconnection", func() {
+			log.Println("on disconnect")
+		})
 	})
-	e.Favicon("public/favicon.ico")
-	e.Use(mw.Logger())
-	e.Use(mw.Recover())
-	e.Use(mw.Gzip())
-	e.StripTrailingSlash()
-	s := stats.New()
-	e.Use(s.Handler)
-
-	e.Get("/stats", func(c *echo.Context) error {
-		return c.JSON(http.StatusOK, s.Data())
+	server.On("error", func(so socketio.Socket, err error) {
+		log.Println("error:", err)
 	})
-
+	/*
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			lang, err := r.Cookie("uutispuroLang")
+			if err != nil {
+				log.Println(err)
+				http.Redirect(w, r, "/en", 302)
+				return
+			} else if lang.Value == "fi" {
+				http.Redirect(w, r, "/fi", 302)
+				return
+			} else {
+				http.Redirect(w, r, "/en", 302)
+				return
+			}
+		})
+	*/
 	t := &Template{
 		templates: template.Must(template.ParseFiles("public/html/index_fi.html")),
 	}
-	e.SetRenderer(t)
-	e.Get("/fi", func(c *echo.Context) error {
-		return app.renderer("index_fi", c)
+
+	http.HandleFunc("/fi", func(w http.ResponseWriter, r *http.Request) {
+		app.renderer("index_fi", w, r, t)
 	})
+	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("./public"))))
+	http.Handle("/socket.io/", server)
 
-	e.Run(":1300")
+	log.Fatal(http.ListenAndServe(":1300", nil))
 }
 
-func (a *Application) renderer(page string, c *echo.Context) error {
-	return c.Render(http.StatusOK, page, a.Sessions.FetchRssItems("fi"))
+func (a *Application) renderer(page string, w http.ResponseWriter, r *http.Request, t *Template) {
+	t.Render(w, page, a.Sessions.FetchRssItems("fi"))
 }
 
-func (t *Template) Render(w io.Writer, name string, data interface{}) error {
-	return t.templates.ExecuteTemplate(w, name, data)
+func (t *Template) Render(w io.Writer, name string, data interface{}) {
+	t.templates.ExecuteTemplate(w, name, data)
 }
