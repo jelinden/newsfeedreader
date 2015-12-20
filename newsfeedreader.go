@@ -50,15 +50,22 @@ func main() {
 		so.Join("news")
 
 		for _ = range time.Tick(10 * time.Second) {
-			news, err := json.Marshal(app.Sessions.FetchRssItems("fi"))
-			if err != nil {
-				log.Println(err.Error())
+			rssList := app.Sessions.FetchRssItems("fi")
+			if len(rssList) > 0 {
+				result := map[string]interface{}{"news": rssList}
+				news, err := json.Marshal(result)
+				if err != nil {
+					log.Println(err.Error())
+				} else {
+					so.Emit("message", string(news))
+					//so.BroadcastTo("news", "message", string(news))
+				}
 			} else {
-				so.BroadcastTo("news", "message", string(news))
+				log.Println("Fetched rss list was empty")
 			}
 		}
 		so.On("disconnection", func() {
-			log.Println("on disconnect")
+			so.Leave("news")
 		})
 	})
 	server.On("error", func(so socketio.Socket, err error) {
@@ -94,7 +101,7 @@ func main() {
 }
 
 func (a *Application) renderer(page string, w http.ResponseWriter, r *http.Request, t *Template) {
-	t.Render(w, page, a.Sessions.FetchRssItems("fi"))
+	t.Render(w, page, map[string]interface{}{"news": a.Sessions.FetchRssItems("fi")})
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}) {

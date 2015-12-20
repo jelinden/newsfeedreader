@@ -35,7 +35,7 @@ func (s *Sessions) createSession(url string) *mgo.Session {
 	return session
 }
 
-func (s *Sessions) FetchRssItems(lang string) map[string]interface{} {
+func (s *Sessions) FetchRssItems(lang string) []domain.RSS {
 	result := []domain.RSS{}
 	type M map[string]interface{}
 	sess := s.Mongo.Clone()
@@ -45,7 +45,7 @@ func (s *Sessions) FetchRssItems(lang string) map[string]interface{} {
 		"category.categoryName": M{"$ne": "Mobiili"},
 	}).Sort("-pubDate").Limit(30).All(&result)
 	if err != nil {
-		fmt.Println("Fatal error " + err.Error())
+		fmt.Println("Mongo error " + err.Error())
 	}
-	return map[string]interface{}{"news": result}
+	return result
 }

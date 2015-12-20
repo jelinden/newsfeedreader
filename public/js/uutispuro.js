@@ -3,7 +3,7 @@ window.onload = function() {
     var lastId;
     socket.on('message', function(msg) {
         var json = JSON.parse(msg);
-        if (lastId !== json.news[0].id) {
+		if (json.news.length > 0 && lastId !== json.news[0].id) {
             for (var i = 4; i >= 0; i--) {
                 if (document.getElementById(json.news[i].id) === null) {
                     var item = makeNode(json, i);
