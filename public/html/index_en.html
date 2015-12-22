@@ -1,4 +1,4 @@
-{{define "index_fi"}}<html>
+{{define "index_en"}}<html>
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, user-scalable=yes" />
@@ -12,7 +12,7 @@
             <div class="item">
                 <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
 			 --><div class="source">{{ .RssSource }}</div><!--
-		  	 --><div class="category">{{ .Category.CategoryName }}</div>
+		  	 --><div class="category">{{ .Category.CategoryEnName }}</div>
                 <div class="link">
                    <a target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>
                 </div>

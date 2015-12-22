@@ -1,15 +1,16 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/googollee/go-socket.io"
+	"github.com/jelinden/newsfeedreader/service"
+	"github.com/jelinden/newsfeedreader/util"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
-
-	"encoding/json"
-	"github.com/googollee/go-socket.io"
-	"github.com/jelinden/newsfeedreader/service"
-	"github.com/jelinden/newsfeedreader/util"
+	"strings"
 	"time"
 )
 
@@ -37,62 +38,71 @@ func (a *Application) Close() {
 	a.Sessions.Close()
 }
 
+var newsFi, newsEn string
+
+func (a *Application) tickNews(lang string) {
+	for _ = range time.Tick(10 * time.Second) {
+		rssList := a.Sessions.FetchRssItems(lang, 0, 5)
+		if len(rssList) > 0 {
+			result := map[string]interface{}{"news": rssList}
+			news, err := json.Marshal(result)
+			if err != nil {
+				log.Println(err.Error())
+			} else {
+				if lang == "fi" {
+					newsFi = string(news)
+				} else {
+					newsEn = string(news)
+				}
+			}
+		} else {
+			log.Println("Fetched rss list was empty")
+		}
+	}
+}
+
+func (a *Application) tickEmit(server *socketio.Server) {
+	for _ = range time.Tick(10 * time.Second) {
+		server.BroadcastTo("en", "message", newsEn)
+		server.BroadcastTo("fi", "message", newsFi)
+	}
+}
+
 func main() {
 	app := NewApplication()
 	app.Init()
 	defer app.Close()
-
+	go app.tickNews("fi")
+	go app.tickNews("en")
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
+	go app.tickEmit(server)
 	server.On("connection", func(so socketio.Socket) {
-		so.Join("news")
+		pathArr := strings.Split(so.Request().Referer(), "/")
+		path := pathArr[len(pathArr)-1]
 
-		for _ = range time.Tick(10 * time.Second) {
-			rssList := app.Sessions.FetchRssItems("fi")
-			if len(rssList) > 0 {
-				result := map[string]interface{}{"news": rssList}
-				news, err := json.Marshal(result)
-				if err != nil {
-					log.Println(err.Error())
-				} else {
-					so.Emit("message", string(news))
-					//so.BroadcastTo("news", "message", string(news))
-				}
-			} else {
-				log.Println("Fetched rss list was empty")
-			}
-		}
+		fmt.Println("connecting to", path)
+		so.Join(path)
+
 		so.On("disconnection", func() {
-			so.Leave("news")
+			so.Leave(path)
 		})
 	})
 	server.On("error", func(so socketio.Socket, err error) {
 		log.Println("error:", err)
 	})
-	/*
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			lang, err := r.Cookie("uutispuroLang")
-			if err != nil {
-				log.Println(err)
-				http.Redirect(w, r, "/en", 302)
-				return
-			} else if lang.Value == "fi" {
-				http.Redirect(w, r, "/fi", 302)
-				return
-			} else {
-				http.Redirect(w, r, "/en", 302)
-				return
-			}
-		})
-	*/
+
 	t := &Template{
-		templates: template.Must(template.ParseFiles("public/html/index_fi.html")),
+		templates: template.Must(template.ParseFiles("public/html/index_fi.html", "public/html/index_en.html")),
 	}
 
 	http.HandleFunc("/fi", func(w http.ResponseWriter, r *http.Request) {
-		app.renderer("index_fi", w, r, t)
+		app.renderer("index_fi", "fi", w, r, t)
+	})
+	http.HandleFunc("/en", func(w http.ResponseWriter, r *http.Request) {
+		app.renderer("index_en", "en", w, r, t)
 	})
 	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("./public"))))
 	http.Handle("/socket.io/", server)
@@ -100,8 +110,8 @@ func main() {
 	log.Fatal(http.ListenAndServe(":1300", nil))
 }
 
-func (a *Application) renderer(page string, w http.ResponseWriter, r *http.Request, t *Template) {
-	t.Render(w, page, map[string]interface{}{"news": a.Sessions.FetchRssItems("fi")})
+func (a *Application) renderer(page string, lang string, w http.ResponseWriter, r *http.Request, t *Template) {
+	t.Render(w, page, map[string]interface{}{"news": a.Sessions.FetchRssItems(lang, 0, 30)})
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}) {

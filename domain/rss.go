@@ -18,8 +18,9 @@ type RSS struct {
 }
 
 type Category struct {
-	Id           bson.ObjectId `json:"id" bson:"_id"`
-	CategoryName string        `json:"categoryName" bson:"categoryName"`
+	Id             bson.ObjectId `json:"id" bson:"_id"`
+	CategoryName   string        `json:"categoryName" bson:"categoryName"`
+	CategoryEnName string        `json:"categoryEnName" bson:"-"`
 }
 
 type RssFeed struct {

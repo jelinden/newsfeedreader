@@ -2,6 +2,7 @@ window.onload = function() {
     var socket = io();
     var lastId;
     socket.on('message', function(msg) {
+
         var json = JSON.parse(msg);
 		if (json.news.length > 0 && lastId !== json.news[0].id) {
             for (var i = 4; i >= 0; i--) {
@@ -35,7 +36,7 @@ var makeNode = function(json, i) {
     link.setAttribute("class", "link");
 	var category = document.createElement("div");
     category.setAttribute("class", "category");
-	category.innerHTML = json.news[i].category.categoryName;
+	category.innerHTML = json.news[i].category.categoryEnName;
     var a = document.createElement("a");
     a.setAttribute("id", json.news[i].id);
     a.setAttribute("href", json.news[i].rssLink);

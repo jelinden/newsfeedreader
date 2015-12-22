@@ -1,0 +1,68 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:300,400);
+body {
+	font-family: 'Roboto', sans-serif;
+	color: #333333;
+	margin: 0px;
+	padding: 0px;
+	font-weight: 400;
+}
+
+#news-container {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.date, .source, .category {
+    display: inline-block;
+    border:0;
+	font-size: 12px;
+}
+
+.head {
+	text-transform: uppercase;
+	text-decoration: none;
+	background-color: #FF8000;
+	padding: 10px;
+	width: 100%;
+	margin: 0px;
+	font-size: 16px;
+	font-weight: lighter;
+}
+
+.head a {
+	font-weight: 300;
+}
+
+.source, .category {
+    margin-left: 5px;
+}
+
+@keyframes new {
+    from {background-color: #AAF200; max-height: 0px;}
+    to {background-color: white; max-height: 80px;}
+}
+
+.new {
+    animation-name: new;
+    animation-duration: 10s;
+}
+
+.item {
+    margin-bottom: 3px;
+	padding: 5px;
+}
+
+.item.new {
+   background-color: white;
+   animation-name: new;
+   animation-duration: 6s;
+   overflow: hidden;
+}
+
+a, a:visited, a:hover {
+    text-decoration: none;
+    font-weight: bold;
+	font-size: 14px;
+	color: black;
+}

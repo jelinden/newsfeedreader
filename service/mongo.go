@@ -2,11 +2,11 @@ package service
 
 import (
 	"fmt"
+	"github.com/jelinden/newsfeedreader/domain"
+	"github.com/jelinden/newsfeedreader/util"
+	mgo "gopkg.in/mgo.v2"
 	"os"
 	"time"
-
-	"github.com/jelinden/newsfeedreader/domain"
-	mgo "gopkg.in/mgo.v2"
 )
 
 type Sessions struct {
@@ -35,7 +35,7 @@ func (s *Sessions) createSession(url string) *mgo.Session {
 	return session
 }
 
-func (s *Sessions) FetchRssItems(lang string) []domain.RSS {
+func (s *Sessions) FetchRssItems(lang string, from int, count int) []domain.RSS {
 	result := []domain.RSS{}
 	type M map[string]interface{}
 	sess := s.Mongo.Clone()
@@ -43,9 +43,12 @@ func (s *Sessions) FetchRssItems(lang string) []domain.RSS {
 	err := c.Find(M{
 		"language":              lang,
 		"category.categoryName": M{"$ne": "Mobiili"},
-	}).Sort("-pubDate").Limit(30).All(&result)
+	}).Sort("-pubDate").Skip(from).Limit(count).All(&result)
 	if err != nil {
 		fmt.Println("Mongo error " + err.Error())
+	}
+	if lang == "en" {
+		result = util.AddCategoryEnNames(result)
 	}
 	return result
 }
