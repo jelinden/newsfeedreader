@@ -36,7 +36,9 @@ var makeNode = function(json, i) {
     link.setAttribute("class", "link");
 	var category = document.createElement("div");
     category.setAttribute("class", "category");
-	category.innerHTML = json.news[i].category.categoryEnName;
+	category.innerHTML = location.pathname.indexOf("/en") >= 0 ?
+		json.news[i].category.categoryEnName :
+		json.news[i].category.categoryName;
     var a = document.createElement("a");
     a.setAttribute("id", json.news[i].id);
     a.setAttribute("href", json.news[i].rssLink);
