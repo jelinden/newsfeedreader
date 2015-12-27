@@ -1,17 +1,18 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/googollee/go-socket.io"
 	"github.com/jelinden/newsfeedreader/service"
+	"github.com/jelinden/newsfeedreader/tick"
 	"github.com/jelinden/newsfeedreader/util"
+	"github.com/labstack/echo"
+	mw "github.com/labstack/echo/middleware"
 	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type (
@@ -19,8 +20,9 @@ type (
 		templates *template.Template
 	}
 	Application struct {
-		Sessions   *service.Sessions
+		Mongo      *service.Mongo
 		CookieUtil *util.CookieUtil
+		Tick       *tick.Tick
 	}
 )
 
@@ -29,59 +31,33 @@ func NewApplication() *Application {
 }
 
 func (a *Application) Init() {
-	a.Sessions = service.NewSessions()
+	a.Mongo = service.NewMongo()
 	a.CookieUtil = util.NewCookieUtil()
-	a.Sessions.Init()
+	a.Tick = tick.NewTick(a.Mongo)
 }
 
 func (a *Application) Close() {
-	a.Sessions.Close()
-}
-
-var newsFi, newsEn string
-
-func (a *Application) tickNews(lang string) {
-	for _ = range time.Tick(10 * time.Second) {
-		rssList := a.Sessions.FetchRssItems(lang, 0, 5)
-		if len(rssList) > 0 {
-			result := map[string]interface{}{"news": rssList}
-			news, err := json.Marshal(result)
-			if err != nil {
-				log.Println(err.Error())
-			} else {
-				if lang == "fi" {
-					newsFi = string(news)
-				} else {
-					newsEn = string(news)
-				}
-			}
-		} else {
-			log.Println("Fetched rss list was empty")
-		}
-	}
-}
-
-func (a *Application) tickEmit(server *socketio.Server) {
-	for _ = range time.Tick(10 * time.Second) {
-		server.BroadcastTo("en", "message", newsEn)
-		server.BroadcastTo("fi", "message", newsFi)
-	}
+	a.Mongo.Close()
 }
 
 func main() {
 	app := NewApplication()
 	app.Init()
+	e := echo.New()
+	e.Use(mw.Gzip())
+	e.Use(mw.Logger())
 	defer app.Close()
-	go app.tickNews("fi")
-	go app.tickNews("en")
+	go app.Tick.TickNews("fi")
+	go app.Tick.TickNews("en")
 	server, err := socketio.NewServer(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	go app.tickEmit(server)
+	go app.Tick.TickEmit(server)
 	server.On("connection", func(so socketio.Socket) {
-		pathArr := strings.Split(so.Request().Referer(), "/")
-		path := pathArr[len(pathArr)-1]
+		referer := strings.Replace(so.Request().Referer(), "http://", "", 1)
+		pathArr := strings.Split(referer, "/")
+		path := pathArr[1]
 
 		fmt.Println("connecting to", path)
 		so.Join(path)
@@ -97,23 +73,33 @@ func main() {
 	t := &Template{
 		templates: template.Must(template.ParseFiles("public/html/index_fi.html", "public/html/index_en.html")),
 	}
-
-	http.HandleFunc("/fi", func(w http.ResponseWriter, r *http.Request) {
-		app.renderer("index_fi", "fi", w, r, t)
+	e.SetRenderer(t)
+	e.Get("/fi", func(c *echo.Context) error {
+		return app.renderer("index_fi", "fi", c)
 	})
-	http.HandleFunc("/en", func(w http.ResponseWriter, r *http.Request) {
-		app.renderer("index_en", "en", w, r, t)
+	e.Get("/en", func(c *echo.Context) error {
+		return app.renderer("index_en", "en", c)
 	})
-	http.Handle("/public/", http.StripPrefix("/public", http.FileServer(http.Dir("./public"))))
+	e.Get("/fi/:page", func(c *echo.Context) error {
+		fmt.Println("page", c.P(0))
+		return app.renderer("index_fi", "fi", c)
+	})
+	e.Get("/en/:page", func(c *echo.Context) error {
+		fmt.Println("page", c.P(0))
+		return app.renderer("index_en", "en", c)
+	})
+	e.ServeDir("/public", "./public")
 	http.Handle("/socket.io/", server)
-
+	// hook echo with http handler
+	http.Handle("/", e)
 	log.Fatal(http.ListenAndServe(":1300", nil))
 }
 
-func (a *Application) renderer(page string, lang string, w http.ResponseWriter, r *http.Request, t *Template) {
-	t.Render(w, page, map[string]interface{}{"news": a.Sessions.FetchRssItems(lang, 0, 30)})
+func (a *Application) renderer(name string, lang string, c *echo.Context) error {
+	return c.Render(http.StatusOK, name, map[string]interface{}{"news": a.Mongo.FetchRssItems(lang, 0, 30)})
 }
 
-func (t *Template) Render(w io.Writer, name string, data interface{}) {
-	t.templates.ExecuteTemplate(w, name, data)
+// Render HTML
+func (t *Template) Render(w io.Writer, name string, data interface{}) error {
+	return t.templates.ExecuteTemplate(w, name, data)
 }

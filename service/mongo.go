@@ -9,23 +9,21 @@ import (
 	"time"
 )
 
-type Sessions struct {
-	Mongo *mgo.Session
+type Mongo struct {
+	mongo *mgo.Session
 }
 
-func NewSessions() *Sessions {
-	return &Sessions{}
+func NewMongo() *Mongo {
+	m := &Mongo{}
+	m.mongo = m.createSession(os.Getenv("MONGO_URL"))
+	return m
 }
 
-func (s *Sessions) Init() {
-	s.Mongo = s.createSession(os.Getenv("MONGO_URL"))
+func (m *Mongo) Close() {
+	m.mongo.Close()
 }
 
-func (s *Sessions) Close() {
-	s.Mongo.Close()
-}
-
-func (s *Sessions) createSession(url string) *mgo.Session {
+func (m *Mongo) createSession(url string) *mgo.Session {
 	maxWait := time.Duration(5 * time.Second)
 	session, err := mgo.DialWithTimeout(url, maxWait)
 	if err != nil {
@@ -35,10 +33,10 @@ func (s *Sessions) createSession(url string) *mgo.Session {
 	return session
 }
 
-func (s *Sessions) FetchRssItems(lang string, from int, count int) []domain.RSS {
+func (m *Mongo) FetchRssItems(lang string, from int, count int) []domain.RSS {
 	result := []domain.RSS{}
 	type M map[string]interface{}
-	sess := s.Mongo.Clone()
+	sess := m.mongo.Clone()
 	c := sess.DB("news").C("newscollection")
 	err := c.Find(M{
 		"language":              lang,
