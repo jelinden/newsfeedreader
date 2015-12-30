@@ -23,12 +23,17 @@ body {
 	text-decoration: none;
 	background-color: #FF8000;
 	background: radial-gradient(#FF8000, #ffab00);
-	padding: 10px;
+	padding-top: 10px;
+	padding-bottom: 10px;
 	width: 100%;
 	margin: 0px;
 	font-weight: lighter;
 	font: 16px "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
+.headInner {
+	margin-left: 10px;
+}
+
 .next, .prev {
 	background-color: #000000;
 	color: #FFCF75;

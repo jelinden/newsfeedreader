@@ -6,8 +6,12 @@
 	{{ linktag "public/css/uutispuro.css" }}
 </head>
 <body>
-	<div class="head"><a href="/fi">Suomi</a> | <a href="/en">English</a></div>
-    <div id="news-container">
+	<div class="head">
+		<div class="headInner">
+			<a href="/fi">Suomi</a> | <a href="/en">English</a>
+		</div>
+	</div>
+	<div id="news-container">
        {{ range .RSS }}
             <div class="item">
                 <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
@@ -25,8 +29,8 @@
 	   {{ if lt .Page 100 }}<span class="next"><a href="/en/{{ add .Page 1 }}">Next</a></span>{{ end }}
 	   {{ if gt .Page 99 }}<span class="light">Next</span>{{ end }}
    </div>
-   <script src="/public/js/socket.io-1.3.7.js" type="application/javascript"></script>
-   <script src="/public/js/moment.2.10.6.js" type="application/javascript"></script>
+   <script async src="/public/js/socket.io-1.3.7.js" type="application/javascript"></script>
+   <script async src="/public/js/moment.2.10.6.js" type="application/javascript"></script>
    {{ scripttag "public/js/uutispuro.js" }}
 </body>
 </html>
