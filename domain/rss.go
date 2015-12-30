@@ -29,3 +29,8 @@ type RssFeed struct {
 	SiteUrl   string        `json:"siteUrl" bson:"siteUrl"`
 	FeedTitle string        `json:"feedTitle" bson:"feedTitle"`
 }
+
+type News struct {
+	RSS  []RSS `json:"rssList"`
+	Page int   `json:"page"`
+}

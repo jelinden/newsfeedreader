@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"github.com/googollee/go-socket.io"
+	"github.com/jelinden/newsfeedreader/domain"
 	"github.com/jelinden/newsfeedreader/service"
 	"github.com/jelinden/newsfeedreader/tick"
 	"github.com/jelinden/newsfeedreader/util"
@@ -12,6 +12,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -46,6 +47,14 @@ func main() {
 	e := echo.New()
 	e.Use(mw.Gzip())
 	e.Use(mw.Logger())
+	e.Favicon("./public/favicon.ico")
+	e.Hook(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		l := len(path) - 1
+		if path != "/" && path[l] == '/' {
+			r.URL.Path = path[:l]
+		}
+	})
 	defer app.Close()
 	go app.Tick.TickNews("fi")
 	go app.Tick.TickNews("en")
@@ -59,7 +68,7 @@ func main() {
 		pathArr := strings.Split(referer, "/")
 		path := pathArr[1]
 
-		fmt.Println("connecting to", path)
+		log.Println("connecting to", path)
 		so.Join(path)
 
 		so.On("disconnection", func() {
@@ -71,22 +80,33 @@ func main() {
 	})
 
 	t := &Template{
-		templates: template.Must(template.ParseFiles("public/html/index_fi.html", "public/html/index_en.html")),
+		templates: template.Must(template.New("").Funcs(template.FuncMap{
+			"minus": func(a, b int) int {
+				return a - b
+			},
+			"add": func(a, b int) int {
+				return a + b
+			},
+		}).ParseFiles("public/html/index_fi.html", "public/html/index_en.html")),
 	}
 	e.SetRenderer(t)
 	e.Get("/fi", func(c *echo.Context) error {
-		return app.renderer("index_fi", "fi", c)
+		return app.renderer("index_fi", "fi", 0, c)
 	})
 	e.Get("/en", func(c *echo.Context) error {
-		return app.renderer("index_en", "en", c)
+		return app.renderer("index_en", "en", 0, c)
 	})
 	e.Get("/fi/:page", func(c *echo.Context) error {
-		fmt.Println("page", c.P(0))
-		return app.renderer("index_fi", "fi", c)
+		if page, err := strconv.Atoi(c.P(0)); err == nil {
+			return app.renderer("index_fi", "fi", page, c)
+		}
+		return app.renderer("index_fi", "fi", 0, c)
 	})
 	e.Get("/en/:page", func(c *echo.Context) error {
-		fmt.Println("page", c.P(0))
-		return app.renderer("index_en", "en", c)
+		if page, err := strconv.Atoi(c.P(0)); err == nil {
+			return app.renderer("index_en", "en", page, c)
+		}
+		return app.renderer("index_en", "en", 0, c)
 	})
 	e.ServeDir("/public", "./public")
 	http.Handle("/socket.io/", server)
@@ -95,8 +115,9 @@ func main() {
 	log.Fatal(http.ListenAndServe(":1300", nil))
 }
 
-func (a *Application) renderer(name string, lang string, c *echo.Context) error {
-	return c.Render(http.StatusOK, name, map[string]interface{}{"news": a.Mongo.FetchRssItems(lang, 0, 30)})
+func (a *Application) renderer(name string, lang string, page int, c *echo.Context) error {
+	news := &domain.News{Page: page, RSS: a.Mongo.FetchRssItems(lang, page, 30)}
+	return c.Render(http.StatusOK, name, news)
 }
 
 // Render HTML

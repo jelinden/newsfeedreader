@@ -1,20 +1,22 @@
 window.onload = function() {
-    var socket = io();
-    var lastId;
-    socket.on('message', function(msg) {
-
-        var json = JSON.parse(msg);
-		if (json.news.length > 0 && lastId !== json.news[0].id) {
-            for (var i = 4; i >= 0; i--) {
-                if (document.getElementById(json.news[i].id) === null) {
-                    var item = makeNode(json, i);
-                    prepend(item);
-                }
-            }
-            lastId = json.news[0].id
-        }
-        json, item = null;
-    });
+	console.log("location.pathname", location.pathname)
+	if (location.pathname === "/fi" || location.pathname === "/en") {
+	    var socket = io();
+	    var lastId;
+	    socket.on('message', function(msg) {
+	        var json = JSON.parse(msg);
+			if (json.news.length > 0 && lastId !== json.news[0].id) {
+	            for (var i = 4; i >= 0; i--) {
+	                if (document.getElementById(json.news[i].id) === null) {
+	                    var item = makeNode(json, i);
+	                    prepend(item);
+	                }
+	            }
+	            lastId = json.news[0].id
+	        }
+	        json, item = null;
+	    });
+	}
 }
 
 var prepend = function(firstElement) {

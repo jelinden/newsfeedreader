@@ -13,7 +13,7 @@ body {
   margin-top: 10px;
 }
 
-.date, .source, .category {
+.date, .source, .category, .paging, .paging a {
     display: inline-block;
     border:0;
 	font-size: 12px;
@@ -23,13 +23,35 @@ body {
 	text-transform: uppercase;
 	text-decoration: none;
 	background-color: #FF8000;
+	background: radial-gradient(#FF8000, #ffab00);
 	padding: 10px;
 	width: 100%;
 	margin: 0px;
 	font-size: 16px;
 	font-weight: lighter;
 }
-
+.next, .prev {
+	background-color: #000000;
+	color: #FFCF75;
+	padding: 5px 10px 5px 10px;
+	color: white;
+	margin-left: 3px;
+}
+.next a, .prev a,
+.next a:link,
+.next a:visited,
+.next a:hover,
+.prev a:link,
+.prev a:visited,
+.prev a:hover {
+	color: #FFCF75;
+}
+.light {
+    background-color: #7f7f7f;
+    padding: 5px 10px 5px 10px;
+    color: #e5e5e5;
+    margin-left: 5px;
+}
 .head a {
 	font-weight: 300;
 }
@@ -60,9 +82,18 @@ body {
    overflow: hidden;
 }
 
-a, a:visited, a:hover {
+a, a:link, a:visited, a:hover {
     text-decoration: none;
-    font-weight: bold;
 	font-size: 14px;
 	color: black;
+}
+.link a {
+	font-weight: bold;
+}
+
+.paging {
+	margin-top: 20px;
+	margin-bottom: 30px;
+	padding-bottom: 30px;
+	font-size: 14px;
 }

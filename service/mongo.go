@@ -29,6 +29,7 @@ func (m *Mongo) createSession(url string) *mgo.Session {
 	if err != nil {
 		fmt.Println("connection lost")
 	}
+	session.SetSocketTimeout(15 * time.Second)
 	session.SetMode(mgo.Monotonic, true)
 	return session
 }
@@ -41,7 +42,7 @@ func (m *Mongo) FetchRssItems(lang string, from int, count int) []domain.RSS {
 	err := c.Find(M{
 		"language":              lang,
 		"category.categoryName": M{"$ne": "Mobiili"},
-	}).Sort("-pubDate").Skip(from).Limit(count).All(&result)
+	}).Sort("-pubDate").Skip(from * count).Limit(count).All(&result)
 	if err != nil {
 		fmt.Println("Mongo error " + err.Error())
 	}

@@ -8,7 +8,7 @@
 <body>
 	<div class="head"><a href="/fi">Suomeksi</a> | <a href="/en">English</a></div>
     <div id="news-container">
-       {{ range .news }}
+       	{{ range .RSS }}
             <div class="item">
                 <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
 			 --><div class="source">{{ .RssSource }}</div><!--
@@ -17,7 +17,13 @@
                    <a target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>
                 </div>
            </div>
-       {{end}}
+       	{{end}}
+	   	<div class="paging">
+	   		{{ if gt .Page 0 }}<span class="prev"><a href="/fi/{{ minus .Page 1 }}">Edelliset</a></span>{{ end }}
+			{{ if lt .Page 1 }}<span class="light">Edelliset</span>{{ end }}
+			{{ if lt .Page 100 }}<span class="next"><a href="/fi/{{ add .Page 1 }}">Seuraavat</a></span>{{ end }}
+			{{ if gt .Page 99 }}<span class="light">Seuraavat</span>{{ end }}
+   		</div>
    </div>
    <script src="/public/js/socket.io-1.3.7.js" type="application/javascript"></script>
    <script src="/public/js/moment.min.js" type="application/javascript"></script>
