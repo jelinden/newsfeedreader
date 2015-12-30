@@ -2,8 +2,8 @@ package service
 
 import (
 	"fmt"
-	"github.com/jelinden/newsfeedreader/domain"
-	"github.com/jelinden/newsfeedreader/util"
+	"github.com/jelinden/newsfeedreader/app/domain"
+	"github.com/jelinden/newsfeedreader/app/util"
 	mgo "gopkg.in/mgo.v2"
 	"os"
 	"time"

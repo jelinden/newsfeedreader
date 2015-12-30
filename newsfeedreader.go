@@ -2,11 +2,11 @@ package main
 
 import (
 	"github.com/googollee/go-socket.io"
-	"github.com/jelinden/newsfeedreader/domain"
-	"github.com/jelinden/newsfeedreader/middleware"
-	"github.com/jelinden/newsfeedreader/service"
-	"github.com/jelinden/newsfeedreader/tick"
-	"github.com/jelinden/newsfeedreader/util"
+	"github.com/jelinden/newsfeedreader/app/domain"
+	"github.com/jelinden/newsfeedreader/app/middleware"
+	"github.com/jelinden/newsfeedreader/app/service"
+	"github.com/jelinden/newsfeedreader/app/tick"
+	"github.com/jelinden/newsfeedreader/app/util"
 	"github.com/labstack/echo"
 	mw "github.com/labstack/echo/middleware"
 	"github.com/rsniezynski/go-asset-helper"

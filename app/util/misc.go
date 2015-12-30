@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/jelinden/newsfeedreader/domain"
+	"github.com/jelinden/newsfeedreader/app/domain"
 	"time"
 )
 

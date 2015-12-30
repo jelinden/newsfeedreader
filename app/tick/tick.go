@@ -3,7 +3,7 @@ package tick
 import (
 	"encoding/json"
 	"github.com/googollee/go-socket.io"
-	"github.com/jelinden/newsfeedreader/service"
+	"github.com/jelinden/newsfeedreader/app/service"
 	"log"
 	"time"
 )
