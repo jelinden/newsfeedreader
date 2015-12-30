@@ -3,11 +3,13 @@ package main
 import (
 	"github.com/googollee/go-socket.io"
 	"github.com/jelinden/newsfeedreader/domain"
+	"github.com/jelinden/newsfeedreader/middleware"
 	"github.com/jelinden/newsfeedreader/service"
 	"github.com/jelinden/newsfeedreader/tick"
 	"github.com/jelinden/newsfeedreader/util"
 	"github.com/labstack/echo"
 	mw "github.com/labstack/echo/middleware"
+	"github.com/rsniezynski/go-asset-helper"
 	"html/template"
 	"io"
 	"log"
@@ -78,9 +80,9 @@ func main() {
 	server.On("error", func(so socketio.Socket, err error) {
 		log.Println("error:", err)
 	})
-
+	static, _ := asset.NewStatic("", "./manifest.json")
 	t := &Template{
-		templates: template.Must(template.New("").Funcs(template.FuncMap{
+		templates: template.Must(template.New("").Funcs(static.FuncMap()).Funcs(template.FuncMap{
 			"minus": func(a, b int) int {
 				return a - b
 			},
@@ -91,33 +93,39 @@ func main() {
 	}
 	e.SetRenderer(t)
 	e.Get("/fi", func(c *echo.Context) error {
-		return app.renderer("index_fi", "fi", 0, c)
+		return app.renderer("index_fi", "fi", 0, c, http.StatusOK)
 	})
 	e.Get("/en", func(c *echo.Context) error {
-		return app.renderer("index_en", "en", 0, c)
+		return app.renderer("index_en", "en", 0, c, http.StatusOK)
 	})
 	e.Get("/fi/:page", func(c *echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
-			return app.renderer("index_fi", "fi", page, c)
+			if page < 999 && page >= 0 {
+				return app.renderer("index_fi", "fi", page, c, http.StatusOK)
+			}
 		}
-		return app.renderer("index_fi", "fi", 0, c)
+		return app.renderer("index_fi", "fi", 0, c, http.StatusBadRequest)
 	})
 	e.Get("/en/:page", func(c *echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
-			return app.renderer("index_en", "en", page, c)
+			if page < 999 && page >= 0 {
+				return app.renderer("index_en", "en", page, c, http.StatusOK)
+			}
 		}
-		return app.renderer("index_en", "en", 0, c)
+		return app.renderer("index_en", "en", 0, c, http.StatusBadRequest)
 	})
-	e.ServeDir("/public", "./public")
+	s := e.Group("/public")
+	s.Use(middleware.Expires())
+	s.ServeDir("", "./public")
 	http.Handle("/socket.io/", server)
 	// hook echo with http handler
 	http.Handle("/", e)
 	log.Fatal(http.ListenAndServe(":1300", nil))
 }
 
-func (a *Application) renderer(name string, lang string, page int, c *echo.Context) error {
+func (a *Application) renderer(name string, lang string, page int, c *echo.Context, statusCode int) error {
 	news := &domain.News{Page: page, RSS: a.Mongo.FetchRssItems(lang, page, 30)}
-	return c.Render(http.StatusOK, name, news)
+	return c.Render(statusCode, name, news)
 }
 
 // Render HTML

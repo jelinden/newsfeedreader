@@ -1,6 +1,5 @@
-@import url(https://fonts.googleapis.com/css?family=Roboto:300,400);
 body {
-	font-family: 'Roboto', sans-serif;
+	font-family: sans-serif;
 	color: #333333;
 	margin: 0px;
 	padding: 0px;
@@ -11,12 +10,12 @@ body {
   display: flex;
   flex-direction: column;
   margin-top: 10px;
+  font: 12px "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .date, .source, .category, .paging, .paging a {
     display: inline-block;
     border:0;
-	font-size: 12px;
 }
 
 .head {
@@ -27,8 +26,8 @@ body {
 	padding: 10px;
 	width: 100%;
 	margin: 0px;
-	font-size: 16px;
 	font-weight: lighter;
+	font: 16px "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 .next, .prev {
 	background-color: #000000;
@@ -36,6 +35,10 @@ body {
 	padding: 5px 10px 5px 10px;
 	color: white;
 	margin-left: 3px;
+	min-width: 100px;
+}
+.next {
+	margin-left: 15px;
 }
 .next a, .prev a,
 .next a:link,
@@ -95,5 +98,6 @@ a, a:link, a:visited, a:hover {
 	margin-top: 20px;
 	margin-bottom: 30px;
 	padding-bottom: 30px;
-	font-size: 14px;
+	width:100%;
+	font: 14px "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
