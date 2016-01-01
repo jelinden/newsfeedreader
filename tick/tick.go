@@ -3,7 +3,7 @@ package tick
 import (
 	"encoding/json"
 	"github.com/googollee/go-socket.io"
-	"github.com/jelinden/newsfeedreader/app/service"
+	"github.com/jelinden/newsfeedreader/service"
 	"log"
 	"time"
 )
@@ -20,7 +20,7 @@ func NewTick(mongo *service.Mongo) *Tick {
 }
 
 func (t *Tick) TickNews(lang string) {
-	for _ = range time.Tick(5 * time.Second) {
+	for _ = range time.Tick(10 * time.Second) {
 		rssList := t.Mongo.FetchRssItems(lang, 0, 5)
 		if len(rssList) > 0 {
 			result := map[string]interface{}{"news": rssList}
@@ -41,7 +41,7 @@ func (t *Tick) TickNews(lang string) {
 }
 
 func (t *Tick) TickEmit(server *socketio.Server) {
-	for _ = range time.Tick(5 * time.Second) {
+	for _ = range time.Tick(10 * time.Second) {
 		server.BroadcastTo("en", "message", t.newsEn)
 		server.BroadcastTo("fi", "message", t.newsFi)
 	}

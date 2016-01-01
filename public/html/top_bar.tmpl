@@ -1,0 +1,12 @@
+{{ define "top_bar" }}
+	<div class="head">
+		<div class="headInner">
+			<a href="/fi">Suomi</a><div> | </div><a href="/en">English</a>
+		</div>
+		<div class="search">
+			<form action="/{{ .Lang }}/search" method="get">
+				<input type="text" name="q" placeholder="Search..."/>
+			</form>
+		</div>
+	</div>
+{{ end }}

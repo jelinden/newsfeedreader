@@ -31,9 +31,6 @@ type RssFeed struct {
 }
 
 type News struct {
-	RSS         []RSS  `json:"rssList"`
-	Page        int    `json:"page"`
-	Lang        string `json:"lang"`
-	SearchQuery string `json:"searchQuery"`
-	ResultCount int    `json:"count"`
+	RSS  []RSS `json:"rssList"`
+	Page int   `json:"page"`
 }
