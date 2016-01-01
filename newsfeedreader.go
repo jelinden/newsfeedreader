@@ -45,7 +45,7 @@ func main() {
 	app.Init()
 	e := echo.New()
 	e.Use(mw.Gzip())
-	e.Use(mw.Logger())
+	e.Use(middleware.Logger())
 	e.Favicon("./public/favicon.ico")
 	e.Hook(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
