@@ -13,6 +13,10 @@ body {
 }
 
 #news-container {
+	display: -webkit-box;
+	display: -moz-box;
+	display: -ms-flexbox;
+	display: -webkit-flex;
 	display: flex;
 	flex-direction: column;
 	margin-top: 10px;
@@ -25,6 +29,10 @@ body {
 }
 
 .head {
+	display: -webkit-box;
+	display: -moz-box;
+	display: -ms-flexbox;
+	display: -webkit-flex;
 	display: flex;
 	justify-content: space-between;
 	text-transform: uppercase;

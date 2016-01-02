@@ -78,6 +78,15 @@ func main() {
 		log.Println("socketio error:", err)
 	})
 
+	e.Get("/", func(c *echo.Context) error {
+		lang := c.Request().Header.Get("Accept-Language")
+		if lang == "" {
+			return c.Redirect(http.StatusTemporaryRedirect, "/fi")
+		} else if strings.Contains(strings.Split(lang, ",")[0], "en") {
+			return c.Redirect(http.StatusTemporaryRedirect, "/en")
+		}
+		return c.Redirect(http.StatusTemporaryRedirect, "/fi")
+	})
 	e.Get("/fi", func(c *echo.Context) error {
 		return app.Render.RenderIndex("index_fi", "fi", 0, c, http.StatusOK)
 	})
