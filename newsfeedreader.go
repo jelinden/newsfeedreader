@@ -9,6 +9,7 @@ import (
 	"github.com/jelinden/newsfeedreader/app/util"
 	"github.com/labstack/echo"
 	mw "github.com/labstack/echo/middleware"
+	"github.com/ranveerkunal/memfs"
 	"log"
 	"net/http"
 	"regexp"
@@ -140,7 +141,15 @@ func main() {
 	})
 	s := e.Group("/public")
 	s.Use(middleware.Expires())
-	s.ServeDir("", "./public")
+	fs, err := memfs.New("public")
+	if err != nil {
+		log.Fatalf("Failed to create memfs: %v", err)
+	}
+	s.Get("/*", func(c *echo.Context) error {
+		http.StripPrefix("/public/", http.FileServer(fs)).
+			ServeHTTP(c.Response().Writer(), c.Request())
+		return nil
+	})
 	http.Handle("/socket.io/", server)
 	// hook echo with http handler
 	http.Handle("/", e)

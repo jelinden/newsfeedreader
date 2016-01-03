@@ -1,5 +1,4 @@
 window.onload = function() {
-	console.log("location.pathname", location.pathname)
 	if (location.pathname === "/fi" || location.pathname === "/en") {
 	    var socket = io();
 	    var lastId;
