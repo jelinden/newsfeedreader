@@ -18,7 +18,7 @@
 </head>
 <body>
 	{{ template "top_bar" . }}
-	<div id="news-container">
+	<div id="news-container" class="flex-display flex-direction-col">
        {{ range .RSS }}
             <div class="item">
                 <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--

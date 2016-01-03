@@ -20,7 +20,7 @@
 	<div class="searchTitle">
 		Vastaus haulle "{{ .SearchQuery }}"
 	</div>
-    <div id="news-container">
+    <div id="news-container" class="flex-display flex-direction-col">
        	{{ range .RSS }}
             <div class="item">
                 <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
