@@ -63,7 +63,14 @@ func main() {
 	}
 	go app.Tick.TickEmit(server)
 	server.On("connection", func(so socketio.Socket) {
-		referer := strings.Replace(so.Request().Referer(), "http://", "", 1)
+		ref := so.Request().Referer()
+		var referer string
+		if strings.Contains(ref, "https") {
+			referer = strings.Replace(ref, "https://", "", 1)
+		} else {
+			referer = strings.Replace(ref, "http://", "", 1)
+		}
+
 		pathArr := strings.Split(referer, "/")
 		path := pathArr[1]
 
