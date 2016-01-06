@@ -50,8 +50,7 @@ func (m *Mongo) FetchRssItems(lang string, from int, count int) []domain.RSS {
 func (m *Mongo) Search(searchString string, lang string, from int, count int) []domain.RSS {
 	type M map[string]interface{}
 	query := M{
-		"$text":    M{"$search": searchString},
-		"language": lang,
+		"$text": M{"$search": searchString, "$language": lang},
 		//"category.categoryName": M{"$ne": "Mobiili"},
 	}
 	result := m.query(query, from, count)
@@ -70,5 +69,6 @@ func (m *Mongo) query(query map[string]interface{}, from int, count int) []domai
 	if err != nil {
 		fmt.Println("Mongo error " + err.Error())
 	}
+	sess.Close()
 	return result
 }
