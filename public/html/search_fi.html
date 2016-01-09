@@ -11,7 +11,7 @@
 	<meta property="http://ogp.me/ns#type" content="website" />
 	<meta property="http://ogp.me/ns#title" content="Uusimmat uutiset - Uutispuro" />
 	<meta property="http://ogp.me/ns#image" content="/public/img/uutispuro_logo_small.gif" />
-	<meta property="http://ogp.me/ns#url" content="http://www.uutispuro.fi/en/" />
+	<meta property="http://ogp.me/ns#url" content="https://www.uutispuro.fi/fi/" />
 	<meta property="http://ogp.me/ns/fb#app_id" content="222039191163874" />
 	<title>Uutishaku ja mediaseuranta</title>
 </head>
@@ -25,7 +25,7 @@
             <div class="item">
                 <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
 			 --><div class="source">{{ .RssSource }}</div><!--
-		  	 --><div class="category">{{ .Category.CategoryName }}</div>
+		  	 --><div class="category"><a href="/fi/category/{{ .Category.CategoryName }}/0">{{ .Category.CategoryName }}</a></div>
                 <div class="link">
                    <a target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>
                 </div>

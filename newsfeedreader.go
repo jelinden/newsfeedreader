@@ -73,7 +73,10 @@ func main() {
 		}
 
 		pathArr := strings.Split(referer, "/")
-		path := pathArr[1]
+		var path = ""
+		if len(pathArr) > 0 {
+			path = pathArr[1]
+		}
 
 		log.Println("connecting to", path)
 		so.Join(path)
@@ -130,6 +133,22 @@ func main() {
 			}
 		}
 		return app.Render.RenderSearch("search_fi", "fi", app.validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
+	})
+	e.Get("/fi/category/:category/:page", func(c *echo.Context) error {
+		if page, err := strconv.Atoi(c.P(1)); err == nil {
+			if page < 999 && page >= 0 {
+				return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(c.P(0)), page, c, http.StatusOK)
+			}
+		}
+		return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(c.P(0)), 0, c, http.StatusOK)
+	})
+	e.Get("/en/category/:category/:page", func(c *echo.Context) error {
+		if page, err := strconv.Atoi(c.P(1)); err == nil {
+			if page < 999 && page >= 0 {
+				return app.Render.RenderByCategory("category_en", "en", app.validateAndCorrectifySearchTerm(c.P(0)), page, c, http.StatusOK)
+			}
+		}
+		return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(c.P(0)), 0, c, http.StatusOK)
 	})
 	e.Get("/en/search/:page", func(c *echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {

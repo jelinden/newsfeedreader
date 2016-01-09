@@ -38,7 +38,20 @@ func (m *Mongo) FetchRssItems(lang string, from int, count int) []domain.RSS {
 	type M map[string]interface{}
 	query := M{
 		"language":              lang,
-		"category.categoryName": M{"$ne": "Mobiili"},
+		"category.categoryName": M{"$nin": []string{"Mobiili", "Blogs"}},
+	}
+	result := m.query(query, from, count)
+	if lang == "en" {
+		result = util.AddCategoryEnNames(result)
+	}
+	return result
+}
+
+func (m *Mongo) FetchRssItemsByCategory(lang string, category string, from int, count int) []domain.RSS {
+	type M map[string]interface{}
+	query := M{
+		"language":              lang,
+		"category.categoryName": category,
 	}
 	result := m.query(query, from, count)
 	if lang == "en" {

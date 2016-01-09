@@ -14,12 +14,12 @@ func DoEvery(d time.Duration, f func(time.Time)) {
 func AddCategoryEnNames(items []domain.RSS) []domain.RSS {
 	for i := range items {
 		cat := items[i].Category.CategoryName
-		items[i].Category.CategoryEnName = enCategoryName(cat)
+		items[i].Category.CategoryEnName = EnCategoryName(cat)
 	}
 	return items
 }
 
-func enCategoryName(cat string) string {
+func EnCategoryName(cat string) string {
 	if cat == "Digi" {
 		return "Tech"
 	} else if cat == "Elokuvat" {

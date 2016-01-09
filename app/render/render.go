@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/jelinden/newsfeedreader/app/domain"
 	"github.com/jelinden/newsfeedreader/app/service"
+	"github.com/jelinden/newsfeedreader/app/util"
 	"github.com/labstack/echo"
 	"github.com/rsniezynski/go-asset-helper"
 	"github.com/wunderlist/ttlcache"
@@ -83,6 +84,28 @@ func (r *Render) RenderSearch(name string, lang string, searchString string, pag
 		ResultCount: len(rssList),
 		SearchQuery: searchString,
 		RSS:         rssList,
+	})
+	if err != nil {
+		log.Println("rendering page", name, "failed.", err.Error())
+		return err
+	}
+	return r.render(http.StatusOK, name, buf.Bytes(), c)
+}
+
+func (r *Render) RenderByCategory(name string, lang string, category string, page int, c *echo.Context, statusCode int) error {
+	var buf bytes.Buffer
+	rssList := r.Mongo.FetchRssItemsByCategory(lang, category, page, 30)
+	var catEn string
+	if lang == "en" {
+		catEn = util.EnCategoryName(category)
+	}
+	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
+		Page:           page,
+		Lang:           lang,
+		ResultCount:    len(rssList),
+		Category:       category,
+		CategoryEnName: catEn,
+		RSS:            rssList,
 	})
 	if err != nil {
 		log.Println("rendering page", name, "failed.", err.Error())

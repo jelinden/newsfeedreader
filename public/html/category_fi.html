@@ -1,22 +1,25 @@
-{{define "index_fi"}}<html>
+{{define "category_fi"}}<html>
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, user-scalable=yes" />
 	{{ linktag "public/css/uutispuro.css" }}
-	<meta name="description" content="Uutiset, uutishaku ja mediaseuranta rss syötteistä, talous, media, digi, kulttuuri, viihde - www.uutispuro.fi" />
+	<meta name="description" content="{{ .Category }} - Latest news from rss feeds - www.uutispuro.fi" />
 	{{ template "header_icons" }}
-	<link rel="alternate" hreflang="en" href="/en/" />
+	<link rel="alternate" hreflang="fi" href="/fi/category/{{ .Category }}" />
 	<meta name="msapplication-TileColor" content="#ffffff" />
 	<meta name="msapplication-TileImage" content="/public/img/mstile-144x144.png" />
 	<meta property="http://ogp.me/ns#type" content="website" />
-	<meta property="http://ogp.me/ns#title" content="Uusimmat uutiset - Uutispuro" />
+	<meta property="http://ogp.me/ns#title" content="{{ .Category }} - Uutispuro" />
 	<meta property="http://ogp.me/ns#image" content="/public/img/uutispuro_logo_small.gif" />
-	<meta property="http://ogp.me/ns#url" content="https://www.uutispuro.fi/fi/" />
+	<meta property="http://ogp.me/ns#url" content="https://www.uutispuro.fi/fi/{{ .Category }}" />
 	<meta property="http://ogp.me/ns/fb#app_id" content="222039191163874" />
-	<title>Uutiset rss syötteistä, uutishaku ja mediaseuranta</title>
+	<title>{{ .Category }} - Uutiset rss syötteistä, uutishaku ja mediaseuranta</title>
 </head>
 <body>
 	{{ template "top_bar" . }}
+	<div class="searchTitle">
+		{{ .Category }}
+	</div>
     <div id="news-container" class="flex-display flex-direction-col">
        	{{ range .RSS }}
             <div class="item">
@@ -30,9 +33,9 @@
        	{{end}}
    	</div>
    	<div class="paging">
-	   {{ if gt .Page 0 }}<span class="prev"><a href="/fi/{{ minus .Page 1 }}">Edelliset</a></span>{{ end }}
+	   {{ if gt .Page 0 }}<span class="prev"><a href="/fi/category/{{ .Category }}/{{ minus .Page 1 }}">Edelliset</a></span>{{ end }}
 	   {{ if lt .Page 1 }}<span class="light">Edelliset</span>{{ end }}
-	   {{ if and (lt .Page 100) (eq .ResultCount 30) }}<span class="next"><a href="/fi/{{ add .Page 1 }}">Seuraavat</a></span>{{ end }}
+	   {{ if and (lt .Page 100) (eq .ResultCount 30) }}<span class="next"><a href="/fi/category/{{ .Category }}/{{ add .Page 1 }}">Seuraavat</a></span>{{ end }}
 	   {{ if or (gt .Page 99) (lt .ResultCount 30) }}<span class="light">Seuraavat</span>{{ end }}
 	</div>
    	{{ template "footer" }}
