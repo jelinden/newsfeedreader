@@ -1,8 +1,5 @@
 {{ define "top_bar" }}
-	<div class="head flex-display justify-center">
-		<div class="headInner flex-display flex-align-center">
-			<a href="/fi">Suomi</a><div> | </div><a href="/en">English</a>
-		</div>
+	<div class="head flex-display justify-end">
 		<div class="search">
 			<form action="/{{ .Lang }}/search" method="get">
 				<input type="text" name="q" placeholder="Search..."/>

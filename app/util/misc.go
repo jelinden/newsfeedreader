@@ -3,6 +3,7 @@ package util
 import (
 	"github.com/jelinden/newsfeedreader/app/domain"
 	"time"
+	"unicode"
 )
 
 func DoEvery(d time.Duration, f func(time.Time)) {
@@ -21,11 +22,11 @@ func AddCategoryEnNames(items []domain.RSS) []domain.RSS {
 
 func EnCategoryName(cat string) string {
 	if cat == "Digi" {
-		return "Tech"
+		return "Digital media"
 	} else if cat == "Elokuvat" {
-		return "Movies"
+		return "TV and movies"
 	} else if cat == "Koti" {
-		return "Home"
+		return "Home and living"
 	} else if cat == "Kotimaa" {
 		return "Domestic"
 	} else if cat == "Kulttuuri" {
@@ -48,11 +49,17 @@ func EnCategoryName(cat string) string {
 		return "Sports"
 	} else if cat == "Viihde" {
 		return "Entertainment"
-	} else if cat == "Blogit" {
+	} else if cat == "Blogs" {
 		return "Blogs"
-	} else if cat == "Naiset" {
-		return "Women"
+	} else if cat == "Naisetjamuoti" {
+		return "Women and fashion"
 	} else {
 		return ""
 	}
+}
+
+func ToUpper(textString string) string {
+	text := []rune(textString)
+	text[0] = unicode.ToUpper(text[0])
+	return string(text)
 }

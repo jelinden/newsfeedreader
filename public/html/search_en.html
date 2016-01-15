@@ -17,29 +17,35 @@
 	<title>Latest business, economy, travel and digital media news - uutispuro.fi</title>
 </head>
 <body>
-	{{ template "top_bar" . }}
-	<div class="searchTitle">
-		Search results for "{{ .SearchQuery }}"
-	</div>
-	<div id="news-container" class="flex-display flex-direction-col">
-       {{ range .RSS }}
-            <div class="item">
-                <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
-			 --><div class="source">{{ .RssSource }}</div><!--
-		  	 --><div class="category"><a href="/en/category/{{ .Category.CategoryName }}/0">{{ .Category.CategoryEnName }}</a></div>
-                <div class="link">
-                   <a target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>
-                </div>
-           </div>
-       {{end}}
+	<div id="layout">
+		{{ template "menu_fi" }}
+
+		<div id="main">
+			{{ template "top_bar" . }}
+			<div class="searchTitle">
+				Search results for "{{ .SearchQuery }}"
+			</div>
+			<div id="news-container" class="flex-display flex-direction-col">
+		       {{ range .RSS }}
+		            <div class="item">
+		                <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
+					 --><div class="source">{{ .RssSource }}</div><!--
+				  	 --><div class="category"><a href="/en/category/{{ toLower .Category.CategoryName }}/0">{{ .Category.CategoryEnName }}</a></div>
+		                <div class="link">
+		                   <a class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>
+		                </div>
+		           </div>
+		       {{end}}
+		   </div>
+	   </div>
+	   <div class="paging">
+		   {{ if gt .Page 0 }}<span class="prev"><a href="/en/search/{{ minus .Page 1 }}?q={{ .SearchQuery }}">Previous</a></span>{{ end }}
+		   {{ if lt .Page 1 }}<span class="light">Previous</span>{{ end }}
+		   {{ if and (lt .Page 100) (eq .ResultCount 30) }}<span class="next"><a href="/en/search/{{ add .Page 1 }}?q={{ .SearchQuery }}">Next</a></span>{{ end }}
+		   {{ if or (gt .Page 99) (lt .ResultCount 30) }}<span class="light">Next</span>{{ end }}
+	   </div>
+	   {{ template "footer" }}
    </div>
-   <div class="paging">
-	   {{ if gt .Page 0 }}<span class="prev"><a href="/en/search/{{ minus .Page 1 }}?q={{ .SearchQuery }}">Previous</a></span>{{ end }}
-	   {{ if lt .Page 1 }}<span class="light">Previous</span>{{ end }}
-	   {{ if and (lt .Page 100) (eq .ResultCount 30) }}<span class="next"><a href="/en/search/{{ add .Page 1 }}?q={{ .SearchQuery }}">Next</a></span>{{ end }}
-	   {{ if or (gt .Page 99) (lt .ResultCount 30) }}<span class="light">Next</span>{{ end }}
-   </div>
-   {{ template "footer" }}
 </body>
 </html>
 {{end}}

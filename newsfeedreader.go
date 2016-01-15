@@ -135,20 +135,22 @@ func main() {
 		return app.Render.RenderSearch("search_fi", "fi", app.validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
 	})
 	e.Get("/fi/category/:category/:page", func(c *echo.Context) error {
+		category := util.ToUpper(c.P(0))
 		if page, err := strconv.Atoi(c.P(1)); err == nil {
 			if page < 999 && page >= 0 {
-				return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(c.P(0)), page, c, http.StatusOK)
+				return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
 			}
 		}
-		return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(c.P(0)), 0, c, http.StatusOK)
+		return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
 	})
 	e.Get("/en/category/:category/:page", func(c *echo.Context) error {
+		category := util.ToUpper(c.P(0))
 		if page, err := strconv.Atoi(c.P(1)); err == nil {
 			if page < 999 && page >= 0 {
-				return app.Render.RenderByCategory("category_en", "en", app.validateAndCorrectifySearchTerm(c.P(0)), page, c, http.StatusOK)
+				return app.Render.RenderByCategory("category_en", "en", app.validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
 			}
 		}
-		return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(c.P(0)), 0, c, http.StatusOK)
+		return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
 	})
 	e.Get("/en/search/:page", func(c *echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
@@ -157,6 +159,11 @@ func main() {
 			}
 		}
 		return app.Render.RenderSearch("search_en", "en", app.validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
+	})
+
+	e.Get("/api/click/:id", func(c *echo.Context) error {
+		app.Mongo.SaveClick(app.validateAndCorrectifySearchTerm(c.P(0)))
+		return c.NoContent(http.StatusOK)
 	})
 	s := e.Group("/public")
 	s.Use(middleware.Expires())

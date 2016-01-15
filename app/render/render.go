@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -43,6 +44,7 @@ func NewRender(mongo *service.Mongo) *Render {
 			"add": func(a, b int) int {
 				return a + b
 			},
+			"toLower": strings.ToLower,
 		}).ParseGlob("public/html/*")),
 	}
 

@@ -5,7 +5,8 @@ rm public/css/*.min.css
 rm public/js/*.min.js
 echo "minifying new files"
 cd public/css
-yuicompressor uutispuro.css > uutispuro-$DATE_STRING.min.css
+yuicompressor pure-0.6.0.css > uutispuro-$DATE_STRING.min.css
+yuicompressor uutispuro.css >> uutispuro-$DATE_STRING.min.css
 cd ../js
 yuicompressor uutispuro.js > uutispuro-$DATE_STRING.min.js
 cd ../..
