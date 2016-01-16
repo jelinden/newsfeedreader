@@ -28,7 +28,7 @@
 			<div id="news-container" class="flex-display flex-direction-col">
 		       {{ range .RSS }}
 		            <div class="item">
-		                <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
+		                <div class="date">{{ .PubDate.Local.Format "02.01.2006 15:04" }}</div><!--
 					 --><div class="source">{{ .RssSource }}</div><!--
 				  	 --><div class="category"><a href="/en/category/{{ toLower .Category.CategoryName }}/0">{{ .Category.CategoryEnName }}</a></div>
 		                <div class="link">

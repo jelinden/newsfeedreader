@@ -60,12 +60,32 @@ func (m *Mongo) FetchRssItemsByCategory(lang string, category string, from int, 
 	return result
 }
 
-func (m *Mongo) Search(searchString string, lang string, from int, count int) []domain.RSS {
+func (m *Mongo) FetchRssItemsBySource(lang string, source string, from int, count int) []domain.RSS {
 	query := M{
-		"$text": M{"$search": searchString, "$language": lang},
-		//"category.categoryName": M{"$ne": "Mobiili"},
+		"language":  lang,
+		"rssSource": source,
 	}
 	result := m.query(query, from, count)
+	if lang == "en" {
+		result = util.AddCategoryEnNames(result)
+	}
+	return result
+}
+
+func (m *Mongo) Search(searchString string, lang string, from int, count int) []domain.RSS {
+	query := M{
+		"$text":    M{"$search": searchString, "$language": lang},
+		"language": lang,
+	}
+
+	result := []domain.RSS{}
+	sess := m.mongo.Clone()
+	c := sess.DB("news").C("newscollection")
+	err := c.Find(query).Select(M{"rssDesc": 0}).Select(bson.M{"score": bson.M{"$meta": "textScore"}}).Sort("$textScore:score", "-pubDate").Skip(from * count).Limit(count).All(&result)
+	if err != nil {
+		log.Println("Mongo error " + err.Error())
+	}
+	sess.Close()
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
 	}

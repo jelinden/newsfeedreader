@@ -150,7 +150,25 @@ func main() {
 				return app.Render.RenderByCategory("category_en", "en", app.validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
 			}
 		}
-		return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
+		return app.Render.RenderByCategory("category_en", "en", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
+	})
+	e.Get("/fi/source/:source/:page", func(c *echo.Context) error {
+		category := util.ToUpper(c.P(0))
+		if page, err := strconv.Atoi(c.P(1)); err == nil {
+			if page < 999 && page >= 0 {
+				return app.Render.RenderBySource("source_fi", "fi", app.validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
+			}
+		}
+		return app.Render.RenderBySource("source_fi", "fi", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
+	})
+	e.Get("/en/source/:source/:page", func(c *echo.Context) error {
+		category := util.ToUpper(c.P(0))
+		if page, err := strconv.Atoi(c.P(1)); err == nil {
+			if page < 999 && page >= 0 {
+				return app.Render.RenderBySource("source_en", "en", app.validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
+			}
+		}
+		return app.Render.RenderBySource("source_en", "en", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
 	})
 	e.Get("/en/search/:page", func(c *echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {

@@ -38,4 +38,5 @@ type News struct {
 	ResultCount    int    `json:"count"`
 	Category       string `json:"category,omitempty"`
 	CategoryEnName string `json:"categoryEnName,omitempty" bson:"-"`
+	Source         string `json:"source,omitempty" bson:"-"`
 }

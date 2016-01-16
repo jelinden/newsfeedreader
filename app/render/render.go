@@ -116,6 +116,23 @@ func (r *Render) RenderByCategory(name string, lang string, category string, pag
 	return r.render(http.StatusOK, name, buf.Bytes(), c)
 }
 
+func (r *Render) RenderBySource(name string, lang string, source string, page int, c *echo.Context, statusCode int) error {
+	var buf bytes.Buffer
+	rssList := r.Mongo.FetchRssItemsBySource(lang, source, page, 30)
+	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
+		Page:        page,
+		Lang:        lang,
+		ResultCount: len(rssList),
+		Source:      source,
+		RSS:         rssList,
+	})
+	if err != nil {
+		log.Println("rendering page", name, "failed.", err.Error())
+		return err
+	}
+	return r.render(http.StatusOK, name, buf.Bytes(), c)
+}
+
 func (r *Render) render(code int, name string, data []byte, c *echo.Context) (err error) {
 	c.Response().Header().Set(echo.ContentType, echo.TextHTMLCharsetUTF8)
 	c.Response().WriteHeader(code)
