@@ -404,8 +404,21 @@ body {
 @media (max-width: 48em) {
     #layout.active {
         position: relative;
-        left: 150px;
+        left: 170px;
     }
+	#menu a {
+		font-size: 16px;
+	}
+	#menu {
+		margin-left: -170px;
+	}
+	#layout.active #menu {
+	    left: 170px;
+	    width: 170px;
+	}
+	#layout.active .menu-link {
+	    left: 170px;
+	}
 }
 
 .pure-menu-item {
