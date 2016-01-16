@@ -74,7 +74,7 @@ func main() {
 
 		pathArr := strings.Split(referer, "/")
 		var path = ""
-		if len(pathArr) > 0 {
+		if len(pathArr) > 1 {
 			path = pathArr[1]
 		}
 
