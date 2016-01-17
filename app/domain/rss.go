@@ -11,7 +11,7 @@ type RSS struct {
 	RssLink   string        `json:"rssLink" bson:"rssLink"`
 	PubDate   time.Time     `json:"pubDate" bson:"pubDate"`
 	RssSource string        `json:"rssSource" bson:"rssSource"`
-	RssClicks int64         `json:"rssClicks" bson:"rssClicks"`
+	Clicks    int           `json:"clicks" bson:"clicks"`
 	Language  string        `json:"language" bson:"language"`
 	Category  Category      `json:"category" bson:"category"`
 	RssFeed   RssFeed       `json:"rssFeed" bson:"rssFeed"`

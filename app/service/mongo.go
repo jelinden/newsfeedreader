@@ -106,10 +106,10 @@ func (m *Mongo) query(query map[string]interface{}, from int, count int) []domai
 
 func (m *Mongo) SaveClick(id string) {
 	s := m.mongo.Clone()
-	c := s.DB("uutispuro").C("newscollection")
+	c := s.DB("news").C("newscollection")
 	_, err := c.UpsertId(bson.ObjectIdHex(id), M{"$inc": M{"clicks": 1}})
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("upsert error", id, err.Error())
 	}
 	s.Close()
 }
