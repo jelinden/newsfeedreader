@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/jelinden/newsfeedreader/app/domain"
 	"github.com/jelinden/newsfeedreader/app/util"
 	mgo "gopkg.in/mgo.v2"
@@ -78,21 +77,19 @@ func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
 	result := []domain.RSS{}
 	dateTo := time.Now()
 	dateFrom := dateTo.AddDate(0, 0, -7)
-	fmt.Println("from", dateFrom, "to", dateTo)
 	sess := m.mongo.Clone()
 	c := sess.DB("news").C("newscollection")
 	query := M{
 		"language": lang,
 		"pubDate":  M{"$gt": dateFrom, "$lt": dateTo},
 	}
-	err := c.Find(query).Select(M{"rssDesc": 0}).Sort("-clicks").Skip(from * count).Limit(count).All(&result)
+	err := c.Find(query).Select(M{"rssDesc": 0}).Sort("-clicks", "-pubDate").Skip(from * count).Limit(count).All(&result)
 	if err != nil {
 		log.Println("Mongo error " + err.Error())
 	}
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
 	}
-	fmt.Println(len(result))
 	sess.Close()
 	return result
 }
