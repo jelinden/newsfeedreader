@@ -61,11 +61,13 @@ func (r *Render) RenderIndex(name string, lang string, page int, c *echo.Context
 	} else {
 		var buf bytes.Buffer
 		rssList := r.Mongo.FetchRssItems(lang, page, 30)
+		mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
 		err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
-			Page:        page,
-			Lang:        lang,
-			ResultCount: len(rssList),
-			RSS:         rssList,
+			Page:         page,
+			Lang:         lang,
+			ResultCount:  len(rssList),
+			RSS:          rssList,
+			MostReadList: mostReadList,
 		})
 		if err != nil {
 			log.Println("rendering page", name, "failed.", err.Error())
