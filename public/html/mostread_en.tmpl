@@ -1,10 +1,11 @@
-{{ define "mostread_fi" }}
+{{ define "mostread_en" }}
 <div id="mostreadweek">
+	<div class="mostreadtitle">Most read</div><div class="mostreadclicks">Clicks</div>
 	{{ range .MostReadList }}
-		<div class="item">
+		<div class="mostread">
 			<div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
 		 --><div class="source">{{ .RssSource }}</div><!--
-		 --><div class="category"><a href="/fi/category/{{ toLower .Category.CategoryName }}/0">{{ .Category.CategoryName }}</a></div><!--
+		 --><div class="category"><a href="/fi/category/{{ toLower .Category.CategoryName }}/0">{{ .Category.CategoryEnName }}</a></div><!--
 		 --><div class="clicks">{{ .Clicks }}</div>
 			<div class="link">
 			   <a class="itemClick" class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>

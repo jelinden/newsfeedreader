@@ -82,12 +82,14 @@ func (r *Render) RenderIndex(name string, lang string, page int, c *echo.Context
 func (r *Render) RenderSearch(name string, lang string, searchString string, page int, c *echo.Context, statusCode int) error {
 	var buf bytes.Buffer
 	rssList := r.Mongo.Search(searchString, lang, page, 30)
+	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
 	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
-		Page:        page,
-		Lang:        lang,
-		ResultCount: len(rssList),
-		SearchQuery: searchString,
-		RSS:         rssList,
+		Page:         page,
+		Lang:         lang,
+		ResultCount:  len(rssList),
+		SearchQuery:  searchString,
+		RSS:          rssList,
+		MostReadList: mostReadList,
 	})
 	if err != nil {
 		log.Println("rendering page", name, "failed.", err.Error())
@@ -99,6 +101,7 @@ func (r *Render) RenderSearch(name string, lang string, searchString string, pag
 func (r *Render) RenderByCategory(name string, lang string, category string, page int, c *echo.Context, statusCode int) error {
 	var buf bytes.Buffer
 	rssList := r.Mongo.FetchRssItemsByCategory(lang, category, page, 30)
+	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
 	var catEn string
 	if lang == "en" {
 		catEn = util.EnCategoryName(category)
@@ -110,6 +113,7 @@ func (r *Render) RenderByCategory(name string, lang string, category string, pag
 		Category:       category,
 		CategoryEnName: catEn,
 		RSS:            rssList,
+		MostReadList:   mostReadList,
 	})
 	if err != nil {
 		log.Println("rendering page", name, "failed.", err.Error())
@@ -121,12 +125,14 @@ func (r *Render) RenderByCategory(name string, lang string, category string, pag
 func (r *Render) RenderBySource(name string, lang string, source string, page int, c *echo.Context, statusCode int) error {
 	var buf bytes.Buffer
 	rssList := r.Mongo.FetchRssItemsBySource(lang, source, page, 30)
+	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
 	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
-		Page:        page,
-		Lang:        lang,
-		ResultCount: len(rssList),
-		Source:      source,
-		RSS:         rssList,
+		Page:         page,
+		Lang:         lang,
+		ResultCount:  len(rssList),
+		Source:       source,
+		RSS:          rssList,
+		MostReadList: mostReadList,
 	})
 	if err != nil {
 		log.Println("rendering page", name, "failed.", err.Error())

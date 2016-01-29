@@ -103,7 +103,7 @@ func (m *Mongo) Search(searchString string, lang string, from int, count int) []
 	result := []domain.RSS{}
 	sess := m.mongo.Clone()
 	c := sess.DB("news").C("newscollection")
-	err := c.Find(query).Select(M{"rssDesc": 0}).Select(bson.M{"score": bson.M{"$meta": "textScore"}}).Sort("$textScore:score", "-pubDate").Skip(from * count).Limit(count).All(&result)
+	err := c.Find(query).Select(M{"rssDesc": 0}).Select(bson.M{"score": bson.M{"$meta": "textScore"}}).Sort("-pubDate", "$textScore:score").Skip(from * count).Limit(count).All(&result)
 	if err != nil {
 		log.Println("Mongo error " + err.Error())
 	}
