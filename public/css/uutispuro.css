@@ -1,3 +1,6 @@
+html {
+    -webkit-text-size-adjust: none
+}
 body {
 	font-family: sans-serif;
 	color: #333333;
@@ -6,10 +9,13 @@ body {
 	font-weight: 400;
 }
 
+h1 {
+	font-size: 18px;
+    margin: 10px 0;
+}
 .searchTitle {
 	font-weight: bold;
-	margin-left: 5px;
-	margin-top: 15px;
+	padding-left: 0.8rem;
 }
 
 #news-container {
@@ -239,6 +245,7 @@ a, a:link, a:visited, a:hover {
 
 #bottomAdd {
 	max-width: 320px;
+	margin-bottom: 20px;
 }
 
 body {
@@ -325,8 +332,8 @@ body {
     color: #999;
     border: none;
     padding-left:5px;
-	padding-top: 4px;
-	padding-bottom: 4px;
+	padding-top: 5px;
+	padding-bottom: 5px;
 	font-size: 14px;
 }
 
@@ -334,7 +341,6 @@ body {
 #menu .pure-menu ul {
     border: none;
     background: transparent;
-	padding-bottom: 5px;
 }
 
 #menu .pure-menu .menu-item-divided {
@@ -460,7 +466,6 @@ body {
 
 ul.pure-menu-list {
 	border-bottom: 1px solid #3d3d3d !important;
-	padding-top: 5px;
 }
 
 .container-fluid,

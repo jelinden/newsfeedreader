@@ -19,9 +19,9 @@
 	<div id="layout">
 	    {{ template "menu_fi" }}
 		{{ template "top_bar" . }}
-		<div class="searchTitle">
+		<h1 class="searchTitle">
 			{{ if eq .Category "Naisetjamuoti" }}Naiset ja muoti{{ else }}{{ .Category }}{{ end }}
-		</div>
+		</h1>
 		<div id="main" class="container-fluid">
 			<div class="row">
 				<div class="col-xs-12 col-sm-7 col-md-7 col-lg-8">
