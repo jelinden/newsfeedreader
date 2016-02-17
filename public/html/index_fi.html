@@ -30,7 +30,7 @@
 				            <div class="item">
 				                <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
 							 --><div class="source">{{ .RssSource }}</div><!--
-						  	 --><div class="category"><a href="/fi/category/{{ toLower .Category.CategoryName }}/0">{{ .Category.CategoryName }}</a></div>
+						  	 --><div class="category"><a href="/fi/category/{{ toLower .Category.CategoryName }}/0">{{ if eq .Category.CategoryName "Naisetjamuoti" }}Naiset ja muoti{{ else }}{{ .Category.CategoryName }}{{ end }}</a></div>
 				                <div class="link">
 				                   <a class="itemClick" class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>
 				                </div>
