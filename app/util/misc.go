@@ -25,7 +25,7 @@ func EnCategoryName(cat string) string {
 		return "Digital media"
 	} else if cat == "Elokuvat" {
 		return "TV and movies"
-	} else if cat == "Koti" {
+	} else if cat == "Koti" || cat == "Asuminen" {
 		return "Home and living"
 	} else if cat == "Kotimaa" {
 		return "Domestic"
