@@ -4,7 +4,6 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
             http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-
 <url>
   <loc>https://www.uutispuro.fi/fi</loc>
   <changefreq>hourly</changefreq>
@@ -13,7 +12,7 @@
 <url>
   <loc>https://www.uutispuro.fi/en</loc>
   <changefreq>hourly</changefreq>
-  <priority>0.80</priority>
+  <priority>0.90</priority>
 </url>
 <url>
   <loc>https://www.uutispuro.fi/fi/category/talous/0</loc>
@@ -174,5 +173,155 @@
   <loc>https://www.uutispuro.fi/en/category/blogs/0</loc>
   <changefreq>hourly</changefreq>
   <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/source/Kauppalehti/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/source/Iltalehti/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/source/Tilt/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/source/Yle/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/source/Aamulehti/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/source/Arvopaperi/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/source/Episodi/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/source/MTV/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/BBC/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/Guardian/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/MovieWeb/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/IGN/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/Reuters/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/CNN/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/Telegraph/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/GameInformer/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/en/source/France24/0</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.uutispuro.fi/fi/search?q=Alma+Media</loc>
+  <changefreq>hourly</changefreq>
+  <priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/fi/search?q=Nokia</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/fi/search?q=Bonnier</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/fi/search?q=osakkeet</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/fi/search?q=F1</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/fi/search?q=Playstation</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/fi/search?q=Netflix</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/en/search?q=Nikon</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/en/search?q=Canon</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/en/search?q=Pentax</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/en/search?q=Apple</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/en/search?q=Google</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
+</url>
+<url>
+	<loc>https://www.uutispuro.fi/en/search?q=Nokia</loc>
+	<changefreq>hourly</changefreq>
+	<priority>0.64</priority>
 </url>
 </urlset>

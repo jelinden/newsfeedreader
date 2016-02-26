@@ -96,7 +96,7 @@ func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
 
 func (m *Mongo) Search(searchString string, lang string, from int, count int) []domain.RSS {
 	query := M{
-		"$text":    M{"$search": searchString, "$language": lang},
+		"$text":    M{"$search": "\"" + searchString + "\"", "$language": lang},
 		"language": lang,
 	}
 
