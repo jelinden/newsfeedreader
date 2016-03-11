@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM vimagick/alpine-arm:latest
 COPY newsfeedreader /newsfeedreader
 COPY public /public
 COPY manifest.json /manifest.json
