@@ -51,7 +51,7 @@ func NewRender(mongo *service.Mongo) *Render {
 	return render
 }
 
-func (r *Render) RenderIndex(name string, lang string, page int, c *echo.Context, statusCode int) error {
+func (r *Render) RenderIndex(name string, lang string, page int, c echo.Context, statusCode int) error {
 	pString := strconv.Itoa(page)
 	key := name + "_" + pString
 	value, exists := r.cache.Get(key)
@@ -79,7 +79,7 @@ func (r *Render) RenderIndex(name string, lang string, page int, c *echo.Context
 	}
 }
 
-func (r *Render) RenderSearch(name string, lang string, searchString string, page int, c *echo.Context, statusCode int) error {
+func (r *Render) RenderSearch(name string, lang string, searchString string, page int, c echo.Context, statusCode int) error {
 	var buf bytes.Buffer
 	rssList := r.Mongo.Search(searchString, lang, page, 30)
 	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
@@ -98,7 +98,7 @@ func (r *Render) RenderSearch(name string, lang string, searchString string, pag
 	return r.render(http.StatusOK, name, buf.Bytes(), c)
 }
 
-func (r *Render) RenderByCategory(name string, lang string, category string, page int, c *echo.Context, statusCode int) error {
+func (r *Render) RenderByCategory(name string, lang string, category string, page int, c echo.Context, statusCode int) error {
 	var buf bytes.Buffer
 	rssList := r.Mongo.FetchRssItemsByCategory(lang, category, page, 30)
 	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
@@ -122,7 +122,7 @@ func (r *Render) RenderByCategory(name string, lang string, category string, pag
 	return r.render(http.StatusOK, name, buf.Bytes(), c)
 }
 
-func (r *Render) RenderBySource(name string, lang string, source string, page int, c *echo.Context, statusCode int) error {
+func (r *Render) RenderBySource(name string, lang string, source string, page int, c echo.Context, statusCode int) error {
 	var buf bytes.Buffer
 	rssList := r.Mongo.FetchRssItemsBySource(lang, source, page, 30)
 	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
@@ -141,7 +141,7 @@ func (r *Render) RenderBySource(name string, lang string, source string, page in
 	return r.render(http.StatusOK, name, buf.Bytes(), c)
 }
 
-func (r *Render) render(code int, name string, data []byte, c *echo.Context) (err error) {
+func (r *Render) render(code int, name string, data []byte, c echo.Context) (err error) {
 	c.Response().Header().Set(echo.ContentType, echo.TextHTMLCharsetUTF8)
 	c.Response().WriteHeader(code)
 	c.Response().Write(data)

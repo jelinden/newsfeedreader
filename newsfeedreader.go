@@ -8,8 +8,11 @@ import (
 	"github.com/jelinden/newsfeedreader/app/tick"
 	"github.com/jelinden/newsfeedreader/app/util"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/engine"
+	"github.com/labstack/echo/engine/standard"
 	mw "github.com/labstack/echo/middleware"
-	"github.com/ranveerkunal/memfs"
+	"golang.org/x/net/http2"
+	//"github.com/ranveerkunal/memfs"
 	"log"
 	"net/http"
 	"regexp"
@@ -47,14 +50,7 @@ func main() {
 	e := echo.New()
 	e.Use(mw.Gzip())
 	e.Use(middleware.Logger())
-	e.Favicon("./public/favicon.ico")
-	e.Hook(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		l := len(path) - 1
-		if path != "/" && path[l] == '/' {
-			r.URL.Path = path[:l]
-		}
-	})
+	e.Use(mw.Recover())
 	defer app.Close()
 	go app.Tick.TickNews("fi")
 	go app.Tick.TickNews("en")
@@ -89,52 +85,52 @@ func main() {
 		log.Println("socketio error:", err)
 	})
 
-	e.Get("/", func(c *echo.Context) error {
-		lang := c.Request().Header.Get("Accept-Language")
+	e.Get("/", echo.HandlerFunc(func(c echo.Context) error {
+		lang := c.Request().Header().Get("Accept-Language")
 		if lang == "" {
 			return c.Redirect(http.StatusTemporaryRedirect, "/fi")
 		} else if strings.Contains(strings.Split(lang, ",")[0], "en") {
 			return c.Redirect(http.StatusTemporaryRedirect, "/en")
 		}
 		return c.Redirect(http.StatusTemporaryRedirect, "/fi")
-	})
-	e.Get("/fi", func(c *echo.Context) error {
+	}))
+	e.Get("/fi", echo.HandlerFunc(func(c echo.Context) error {
 		return app.Render.RenderIndex("index_fi", "fi", 0, c, http.StatusOK)
-	})
-	e.Get("/en", func(c *echo.Context) error {
+	}))
+	e.Get("/en", echo.HandlerFunc(func(c echo.Context) error {
 		return app.Render.RenderIndex("index_en", "en", 0, c, http.StatusOK)
-	})
-	e.Get("/fi/:page", func(c *echo.Context) error {
+	}))
+	e.Get("/fi/:page", echo.HandlerFunc(func(c echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
 			if page < 999 && page >= 0 {
 				return app.Render.RenderIndex("index_fi", "fi", page, c, http.StatusOK)
 			}
 		}
 		return app.Render.RenderIndex("index_fi", "fi", 0, c, http.StatusBadRequest)
-	})
-	e.Get("/en/:page", func(c *echo.Context) error {
+	}))
+	e.Get("/en/:page", echo.HandlerFunc(func(c echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
 			if page < 999 && page >= 0 {
 				return app.Render.RenderIndex("index_en", "en", page, c, http.StatusOK)
 			}
 		}
 		return app.Render.RenderIndex("index_en", "en", 0, c, http.StatusBadRequest)
-	})
-	e.Get("/fi/search", func(c *echo.Context) error {
+	}))
+	e.Get("/fi/search", echo.HandlerFunc(func(c echo.Context) error {
 		return app.Render.RenderSearch("search_fi", "fi", app.validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
-	})
-	e.Get("/en/search", func(c *echo.Context) error {
+	}))
+	e.Get("/en/search", echo.HandlerFunc(func(c echo.Context) error {
 		return app.Render.RenderSearch("search_en", "en", app.validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
-	})
-	e.Get("/fi/search/:page", func(c *echo.Context) error {
+	}))
+	e.Get("/fi/search/:page", echo.HandlerFunc(func(c echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
 			if page < 999 && page >= 0 {
 				return app.Render.RenderSearch("search_fi", "fi", app.validateAndCorrectifySearchTerm(c.Form("q")), page, c, http.StatusOK)
 			}
 		}
 		return app.Render.RenderSearch("search_fi", "fi", app.validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
-	})
-	e.Get("/fi/category/:category/:page", func(c *echo.Context) error {
+	}))
+	e.Get("/fi/category/:category/:page", echo.HandlerFunc(func(c echo.Context) error {
 		category := util.ToUpper(c.P(0))
 		if page, err := strconv.Atoi(c.P(1)); err == nil {
 			if page < 999 && page >= 0 {
@@ -142,8 +138,8 @@ func main() {
 			}
 		}
 		return app.Render.RenderByCategory("category_fi", "fi", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
-	})
-	e.Get("/en/category/:category/:page", func(c *echo.Context) error {
+	}))
+	e.Get("/en/category/:category/:page", echo.HandlerFunc(func(c echo.Context) error {
 		category := util.ToUpper(c.P(0))
 		if page, err := strconv.Atoi(c.P(1)); err == nil {
 			if page < 999 && page >= 0 {
@@ -151,8 +147,8 @@ func main() {
 			}
 		}
 		return app.Render.RenderByCategory("category_en", "en", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
-	})
-	e.Get("/fi/source/:source/:page", func(c *echo.Context) error {
+	}))
+	e.Get("/fi/source/:source/:page", echo.HandlerFunc(func(c echo.Context) error {
 		category := util.ToUpper(c.P(0))
 		if page, err := strconv.Atoi(c.P(1)); err == nil {
 			if page < 999 && page >= 0 {
@@ -160,8 +156,8 @@ func main() {
 			}
 		}
 		return app.Render.RenderBySource("source_fi", "fi", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
-	})
-	e.Get("/en/source/:source/:page", func(c *echo.Context) error {
+	}))
+	e.Get("/en/source/:source/:page", echo.HandlerFunc(func(c echo.Context) error {
 		category := util.ToUpper(c.P(0))
 		if page, err := strconv.Atoi(c.P(1)); err == nil {
 			if page < 999 && page >= 0 {
@@ -169,34 +165,38 @@ func main() {
 			}
 		}
 		return app.Render.RenderBySource("source_en", "en", app.validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
-	})
-	e.Get("/en/search/:page", func(c *echo.Context) error {
+	}))
+	e.Get("/en/search/:page", echo.HandlerFunc(func(c echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
 			if page < 999 && page >= 0 {
 				return app.Render.RenderSearch("search_en", "en", app.validateAndCorrectifySearchTerm(c.Form("q")), page, c, http.StatusOK)
 			}
 		}
 		return app.Render.RenderSearch("search_en", "en", app.validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
-	})
+	}))
 
-	e.Get("/api/click/:id", func(c *echo.Context) error {
+	e.Get("/api/click/:id", echo.HandlerFunc(func(c echo.Context) error {
 		app.Mongo.SaveClick(app.validateAndCorrectifySearchTerm(c.P(0)))
 		return c.NoContent(http.StatusOK)
-	})
-	s := e.Group("/public")
-	s.Use(middleware.Expires())
-	fs, err := memfs.New("public")
-	if err != nil {
-		log.Fatalf("Failed to create memfs: %v", err)
-	}
-	s.Get("/*", func(c *echo.Context) error {
-		http.StripPrefix("/public/", http.FileServer(fs)).
-			ServeHTTP(c.Response().Writer(), c.Request())
-		return nil
-	})
+	}))
+	//s := e.Group("/public")
+	//s.Use(middleware.Expires(), mw.Gzip())
+	e.Static("/public", "public")
+	//fs, err := memfs.New("public")
+	//if err != nil {
+	//	log.Fatalf("Failed to create memfs: public err: %v", err)
+	//}
+	//s.Get("/*", standard.WrapHandler(http.StripPrefix("/public/", http.FileServer(fs))))
+
+	e.File("/favicon.ico", "public/favicon.ico")
+
 	http.Handle("/socket.io/", server)
+
 	// hook echo with http handler
-	http.Handle("/", e)
+	std := standard.NewFromConfig(engine.Config{})
+	std.SetHandler(e)
+	http2.ConfigureServer(std.Server, nil)
+	http.Handle("/", std)
 	log.Fatal(http.ListenAndServe(":1300", nil))
 }
 
