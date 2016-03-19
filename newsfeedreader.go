@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo/engine/standard"
 	mw "github.com/labstack/echo/middleware"
 	"golang.org/x/net/http2"
-	//"github.com/ranveerkunal/memfs"
 	"log"
 	"net/http"
 	"regexp"
@@ -26,6 +25,7 @@ type (
 		CookieUtil *util.CookieUtil
 		Tick       *tick.Tick
 		Render     *render.Render
+		Nats       *middleware.Nats
 	}
 )
 
@@ -38,6 +38,7 @@ func (a *Application) Init() {
 	a.CookieUtil = util.NewCookieUtil()
 	a.Tick = tick.NewTick(a.Mongo)
 	a.Render = render.NewRender(a.Mongo)
+	a.Nats = middleware.NewNats()
 }
 
 func (a *Application) Close() {
@@ -49,8 +50,10 @@ func main() {
 	app.Init()
 	e := echo.New()
 	e.Use(mw.Gzip())
-	e.Use(middleware.Logger())
 	e.Use(mw.Recover())
+	e.Use(middleware.Logger())
+	e.Use(middleware.NatsHandler(app.Nats))
+
 	defer app.Close()
 	go app.Tick.TickNews("fi")
 	go app.Tick.TickNews("en")
@@ -179,15 +182,7 @@ func main() {
 		app.Mongo.SaveClick(app.validateAndCorrectifySearchTerm(c.P(0)))
 		return c.NoContent(http.StatusOK)
 	}))
-	//s := e.Group("/public")
-	//s.Use(middleware.Expires(), mw.Gzip())
 	e.Static("/public", "public")
-	//fs, err := memfs.New("public")
-	//if err != nil {
-	//	log.Fatalf("Failed to create memfs: public err: %v", err)
-	//}
-	//s.Get("/*", standard.WrapHandler(http.StripPrefix("/public/", http.FileServer(fs))))
-
 	e.File("/favicon.ico", "public/favicon.ico")
 
 	http.Handle("/socket.io/", server)
