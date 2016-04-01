@@ -1,16 +1,21 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/labstack/echo"
+	"github.com/pquerna/ffjson/ffjson"
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"time"
 )
 
+// Logger is our custom logger
 func Logger() echo.MiddlewareFunc {
 	return func(next echo.Handler) echo.Handler {
 		return echo.HandlerFunc(func(c echo.Context) error {
+			start := time.Now()
 			req := c.Request()
 			res := c.Response()
 
@@ -23,18 +28,17 @@ func Logger() echo.MiddlewareFunc {
 				remoteAddr, _, _ = net.SplitHostPort(remoteAddr)
 			}
 
-			start := time.Now()
 			if err := next.Handle(c); err != nil {
 				c.Error(err)
 			}
-			stop := time.Now()
+
 			method := req.Method()
 			path := req.URL().Path()
 			if path == "" {
 				path = "/"
 			}
 			size := res.Size()
-			code := res.Status()
+			code := strconv.Itoa(res.Status())
 
 			f, err := os.OpenFile("access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 			if err != nil {
@@ -43,8 +47,17 @@ func Logger() echo.MiddlewareFunc {
 			defer f.Close()
 			logger := log.New(f, "", log.LstdFlags)
 			logger.SetOutput(f)
-
-			logger.Println(remoteAddr, method, path, code, stop.Sub(start), size)
+			stop := time.Now()
+			logLine := map[string]string{
+				"ip":            remoteAddr,
+				"method":        method,
+				"path":          path,
+				"status":        code,
+				"response-time": fmt.Sprintf("%v", stop.Sub(start).Nanoseconds()),
+				"size":          fmt.Sprintf("%v", size),
+			}
+			buf, _ := ffjson.Marshal(&logLine)
+			logger.Println(string(buf))
 			return nil
 		})
 	}
