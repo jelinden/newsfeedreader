@@ -107,7 +107,7 @@ func main() {
 	http.Handle("/socket.io/", server)
 
 	// hook echo with http handler
-	std := standard.NewFromConfig(engine.Config{})
+	std := standard.WithConfig(engine.Config{})
 	std.SetHandler(e)
 	http2.ConfigureServer(std.Server, nil)
 	http.Handle("/", std)

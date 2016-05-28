@@ -275,8 +275,6 @@ body {
 #layout.active #menu {
     left: 170px;
     width: 170px;
-	overflow-x: hidden;
-	overflow: scroll;
 }
 
 #layout.active .menu-link {
@@ -327,8 +325,6 @@ body {
     bottom: 0;
     z-index: 1000;
     background: #191818;
-	overflow-x: hidden;
-    overflow-y: scroll;
     -webkit-overflow-scrolling: touch;
 }
 
