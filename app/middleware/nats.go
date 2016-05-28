@@ -21,19 +21,19 @@ func NewNats() *Nats {
 }
 
 func NatsHandler(nats *Nats) echo.MiddlewareFunc {
-	return func(next echo.Handler) echo.Handler {
-		return echo.HandlerFunc(func(c echo.Context) error {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
 			uri := "\"uri\":\"" + c.Request().URI() + "\""
 			userAgent := "\"userAgent\":\"" + c.Request().Header().Get("user-agent") + "\""
 			localIP := "\"localIP\":\"" + nats.LocalIP + "\""
 			time := "\"time\":\"" + time.Now().UTC().String() + "\""
 
 			nats.NatsConn.Publish("click", []byte("{"+time+", "+uri+", "+userAgent+", "+localIP+"}"))
-			if err := next.Handle(c); err != nil {
+			if err := next(c); err != nil {
 				c.Error(err)
 			}
 			return nil
-		})
+		}
 	}
 }
 

@@ -13,22 +13,22 @@ import (
 
 // Logger is our custom logger
 func Logger() echo.MiddlewareFunc {
-	return func(next echo.Handler) echo.Handler {
-		return echo.HandlerFunc(func(c echo.Context) error {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
 			start := time.Now()
 			req := c.Request()
 			res := c.Response()
 
 			remoteAddr := req.RemoteAddress()
-			if ip := req.Header().Get(echo.XRealIP); ip != "" {
+			if ip := req.Header().Get(echo.HeaderXRealIP); ip != "" {
 				remoteAddr = ip
-			} else if ip = req.Header().Get(echo.XForwardedFor); ip != "" {
+			} else if ip = req.Header().Get(echo.HeaderXForwardedFor); ip != "" {
 				remoteAddr = ip
 			} else {
 				remoteAddr, _, _ = net.SplitHostPort(remoteAddr)
 			}
 
-			if err := next.Handle(c); err != nil {
+			if err := next(c); err != nil {
 				c.Error(err)
 			}
 
@@ -62,6 +62,6 @@ func Logger() echo.MiddlewareFunc {
 
 			logger.Println(string(buf))
 			return nil
-		})
+		}
 	}
 }

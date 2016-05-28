@@ -59,32 +59,32 @@ func EnRootPaged(render *render.Render) echo.HandlerFunc {
 
 func FiSearch(render *render.Render) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
+		return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.FormValue("q")), 0, c, http.StatusOK)
 	}
 }
 func EnSearch(render *render.Render) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
+		return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.FormValue("q")), 0, c, http.StatusOK)
 	}
 }
 func FiSearchPaged(render *render.Render) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
 			if page < 999 && page >= 0 {
-				return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.Form("q")), page, c, http.StatusOK)
+				return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.FormValue("q")), page, c, http.StatusOK)
 			}
 		}
-		return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
+		return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.FormValue("q")), 0, c, http.StatusOK)
 	}
 }
 func EnSearchPaged(render *render.Render) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if page, err := strconv.Atoi(c.P(0)); err == nil {
 			if page < 999 && page >= 0 {
-				return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.Form("q")), page, c, http.StatusOK)
+				return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.FormValue("q")), page, c, http.StatusOK)
 			}
 		}
-		return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.Form("q")), 0, c, http.StatusOK)
+		return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.FormValue("q")), 0, c, http.StatusOK)
 	}
 }
 func FiCategory(render *render.Render) echo.HandlerFunc {

@@ -142,7 +142,7 @@ func (r *Render) RenderBySource(name string, lang string, source string, page in
 }
 
 func (r *Render) render(code int, name string, data []byte, c echo.Context) (err error) {
-	c.Response().Header().Set(echo.ContentType, echo.TextHTMLCharsetUTF8)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTMLCharsetUTF8)
 	c.Response().WriteHeader(code)
 	c.Response().Write(data)
 	return
