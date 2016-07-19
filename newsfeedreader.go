@@ -52,6 +52,9 @@ func main() {
 	app := NewApplication()
 	app.Init()
 	e := echo.New()
+	e.Use(mw.RemoveTrailingSlashWithConfig(mw.TrailingSlashConfig{
+		RedirectCode: http.StatusMovedPermanently,
+	}))
 	e.Use(mw.Gzip())
 	e.Use(mw.Recover())
 	e.Use(middleware.Logger())
@@ -106,7 +109,6 @@ func main() {
 	e.GET("/en/source/:source/:page", middleware.EnSource(app.Render))
 	e.GET("/api/click/:id", middleware.Click(app.Mongo))
 
-	//e.Static("/public", "public")
 	var secondsInAYear = 365 * 24 * 60 * 60
 	e.GET("/public*", func(c echo.Context) error {
 		c.Response().Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public, must-revalidate, proxy-revalidate", secondsInAYear))
