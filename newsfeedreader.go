@@ -1,6 +1,10 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"strings"
+
 	"github.com/googollee/go-socket.io"
 	"github.com/jelinden/newsfeedreader/app/middleware"
 	"github.com/jelinden/newsfeedreader/app/render"
@@ -12,9 +16,6 @@ import (
 	"github.com/labstack/echo/engine/standard"
 	mw "github.com/labstack/echo/middleware"
 	"golang.org/x/net/http2"
-	"log"
-	"net/http"
-	"strings"
 )
 
 type (
@@ -40,6 +41,7 @@ func (a *Application) Init() {
 }
 
 func (a *Application) Close() {
+	log.Println("closing up")
 	a.Mongo.Close()
 }
 
@@ -109,7 +111,8 @@ func main() {
 	// hook echo with http handler
 	std := standard.WithConfig(engine.Config{})
 	std.SetHandler(e)
-	http2.ConfigureServer(std.Server, nil)
+	//http2.ConfigureServer(std.Server, nil)
+	http2.ConfigureServer(std.Server, &http2.Server{})
 	http.Handle("/", std)
 	log.Fatal(http.ListenAndServe(":1300", nil))
 }

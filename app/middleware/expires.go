@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/labstack/echo"
 )
 
 var secondsInAYear = 365 * 24 * 60 * 60
@@ -16,7 +18,7 @@ func Expires() echo.MiddlewareFunc {
 			c.Response().Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
 			c.Response().Header().Set("Expires", time.Now().AddDate(1, 0, 0).Format(http.TimeFormat))
 			if err := next(c); err != nil {
-				fmt.Println("error", err)
+				log.Println("error", err)
 				c.Error(err)
 			}
 			return nil
