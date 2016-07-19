@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"path"
 	"strings"
+	"time"
 
 	"github.com/googollee/go-socket.io"
 	"github.com/jelinden/newsfeedreader/app/middleware"
@@ -88,22 +91,29 @@ func main() {
 		log.Println("socketio error:", err)
 	})
 
-	e.Get("/", middleware.Root())
-	e.Get("/fi", middleware.FiRoot(app.Render))
-	e.Get("/en", middleware.EnRoot(app.Render))
-	e.Get("/fi/:page", middleware.FiRootPaged(app.Render))
-	e.Get("/en/:page", middleware.EnRootPaged(app.Render))
-	e.Get("/fi/search", middleware.FiSearch(app.Render))
-	e.Get("/en/search", middleware.EnSearch(app.Render))
-	e.Get("/fi/search/:page", middleware.FiSearchPaged(app.Render))
-	e.Get("/en/search/:page", middleware.EnSearchPaged(app.Render))
-	e.Get("/fi/category/:category/:page", middleware.FiCategory(app.Render))
-	e.Get("/en/category/:category/:page", middleware.EnCategory(app.Render))
-	e.Get("/fi/source/:source/:page", middleware.FiSource(app.Render))
-	e.Get("/en/source/:source/:page", middleware.EnSource(app.Render))
-	e.Get("/api/click/:id", middleware.Click(app.Mongo))
+	e.GET("/", middleware.Root())
+	e.GET("/fi", middleware.FiRoot(app.Render))
+	e.GET("/en", middleware.EnRoot(app.Render))
+	e.GET("/fi/:page", middleware.FiRootPaged(app.Render))
+	e.GET("/en/:page", middleware.EnRootPaged(app.Render))
+	e.GET("/fi/search", middleware.FiSearch(app.Render))
+	e.GET("/en/search", middleware.EnSearch(app.Render))
+	e.GET("/fi/search/:page", middleware.FiSearchPaged(app.Render))
+	e.GET("/en/search/:page", middleware.EnSearchPaged(app.Render))
+	e.GET("/fi/category/:category/:page", middleware.FiCategory(app.Render))
+	e.GET("/en/category/:category/:page", middleware.EnCategory(app.Render))
+	e.GET("/fi/source/:source/:page", middleware.FiSource(app.Render))
+	e.GET("/en/source/:source/:page", middleware.EnSource(app.Render))
+	e.GET("/api/click/:id", middleware.Click(app.Mongo))
 
-	e.Static("/public", "public")
+	//e.Static("/public", "public")
+	var secondsInAYear = 365 * 24 * 60 * 60
+	e.GET("/public*", func(c echo.Context) error {
+		c.Response().Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public, must-revalidate, proxy-revalidate", secondsInAYear))
+		c.Response().Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
+		c.Response().Header().Set("Expires", time.Now().AddDate(1, 0, 0).Format(http.TimeFormat))
+		return c.File(path.Join("public", c.P(0)))
+	})
 	e.File("/favicon.ico", "public/favicon.ico")
 
 	http.Handle("/socket.io/", server)
