@@ -1,7 +1,7 @@
 {
 	"ImportPath": "github.com/jelinden/newsfeedreader",
-	"GoVersion": "go1.6",
-	"GodepVersion": "v72",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
 	"Deps": [
 		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
@@ -79,8 +79,8 @@
 		},
 		{
 			"ImportPath": "github.com/mattn/go-colorable",
-			"Comment": "v0.0.4-1-ge8a10dd",
-			"Rev": "e8a10ddc7d2a7fe255f6fd7f501070a4cb62c183"
+			"Comment": "v0.0.5",
+			"Rev": "9056b7a9f2d1f2d96498d6d146acd1f9d5ed3d59"
 		},
 		{
 			"ImportPath": "github.com/mattn/go-isatty",
@@ -117,28 +117,28 @@
 			"Rev": "38e753e5e8539095504c5ef87098228223f22ed0"
 		},
 		{
+			"ImportPath": "github.com/streamrail/concurrent-map",
+			"Rev": "65a174a3a4188c0b7099acbc6cfa0c53628d3287"
+		},
+		{
 			"ImportPath": "github.com/valyala/fasttemplate",
 			"Rev": "3b874956e03f1636d171bda64b130f9135f42cff"
 		},
 		{
-			"ImportPath": "github.com/wunderlist/ttlcache",
-			"Rev": "fa8f18d5e019f6bdf076153e60dccf2c6fc7ccf5"
-		},
-		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "30db96677b74e24b967e23f911eb3364fc61a011"
+			"Rev": "1961d9def2b2d7a28d7958926d2457d05a178ecd"
 		},
 		{
 			"ImportPath": "golang.org/x/net/http2",
-			"Rev": "30db96677b74e24b967e23f911eb3364fc61a011"
+			"Rev": "1961d9def2b2d7a28d7958926d2457d05a178ecd"
 		},
 		{
 			"ImportPath": "golang.org/x/net/http2/hpack",
-			"Rev": "30db96677b74e24b967e23f911eb3364fc61a011"
+			"Rev": "1961d9def2b2d7a28d7958926d2457d05a178ecd"
 		},
 		{
 			"ImportPath": "golang.org/x/net/lex/httplex",
-			"Rev": "30db96677b74e24b967e23f911eb3364fc61a011"
+			"Rev": "1961d9def2b2d7a28d7958926d2457d05a178ecd"
 		},
 		{
 			"ImportPath": "golang.org/x/sys/unix",
