@@ -13,7 +13,6 @@ import (
 	"github.com/jelinden/newsfeedreader/app/service"
 	"github.com/jelinden/newsfeedreader/app/util"
 	"github.com/labstack/echo"
-	"github.com/muesli/cache2go"
 	"github.com/rsniezynski/go-asset-helper"
 )
 
@@ -23,7 +22,6 @@ type (
 		t              *Template
 		static         *asset.Static
 		newsFi, newsEn string
-		expiringCache  *cache2go.CacheTable
 	}
 	Template struct {
 		templates *template.Template
@@ -33,10 +31,6 @@ type (
 func NewRender(mongo *service.Mongo) *Render {
 	render := &Render{}
 	render.Mongo = mongo
-	render.expiringCache = cache2go.Cache("news")
-	render.expiringCache.SetAddedItemCallback(func(entry *cache2go.CacheItem) {
-		//log.Println("Added:", entry.Key(), entry.CreatedOn())
-	})
 	newStatic, _ := asset.NewStatic("", "./manifest.json")
 	render.static = newStatic
 	render.t = &Template{
@@ -50,36 +44,86 @@ func NewRender(mongo *service.Mongo) *Render {
 			"toLower": strings.ToLower,
 		}).ParseGlob("public/html/*")),
 	}
+	go doEvery(30*time.Second, render.updateStaleCacheItems)
+	go render.warmUpCache()
 	return render
 }
 
-func (r *Render) RenderIndex(name string, lang string, page int, c echo.Context, statusCode int) error {
-	pString := strconv.Itoa(page)
-	key := name + "_" + pString
-	//log.Println("rendering index", name)
-	res, err := r.expiringCache.Value(key)
-	if err == nil {
-		//og.Println("Found value in cache")
-		return r.render(http.StatusOK, name, res.Data().([]byte), c)
+func (r *Render) warmUpCache() {
+	keys := []string{"category_fi|fi|Urheilu|0",
+		"category_fi|fi|Matkustus|0",
+		"category_fi|fi|Ulkomaat|0",
+		"category_fi|fi|Tiede|0",
+		"category_fi|fi|Talous|0",
+		"category_fi|fi|Kulttuuri|0",
+		"category_fi|fi|Pelit|0",
+		"category_fi|fi|Viihde|0",
+		"category_fi|fi|Blogs|0",
+		"category_fi|fi|Kotimaa|0",
+		"category_fi|fi|Digi|0",
+		"category_fi|fi|Asuminen|0",
+		"category_fi|fi|Ruoka|0",
+		"category_fi|fi|Terveys|0",
+		"category_fi|fi|Elokuvat|0",
+		"category_fi|fi|Naisetjamuoti|0",
+		"category_en|en|Urheilu|0",
+		"category_en|en|Matkustus|0",
+		"category_en|en|Ulkomaat|0",
+		"category_en|en|Tiede|0",
+		"category_en|en|Talous|0",
+		"category_en|en|Kulttuuri|0",
+		"category_en|en|Pelit|0",
+		"category_en|en|Viihde|0",
+		"category_en|en|Blogs|0",
+		"category_en|en|Kotimaa|0",
+		"category_en|en|Digi|0",
+		"category_en|en|Asuminen|0",
+		"category_en|en|Ruoka|0",
+		"category_en|en|Terveys|0",
+		"category_en|en|Elokuvat|0",
+		"category_en|en|Naisetjamuoti|0",
 	}
-	buf := r.getIndexTemplate(name, lang, page)
-	item := r.expiringCache.Add(key, 30*time.Second, buf.Bytes())
-	go r.expireIndexCallback(item, name, lang, page)
+	r.RenderIndex("index_fi|fi|0")
+	r.RenderIndex("index_en|en|0")
+	for _, key := range keys {
+		r.RenderByCategory(key)
+	}
+}
+
+func (r *Render) Index(name string, lang string, page int, c echo.Context, statusCode int) error {
+	pString := strconv.Itoa(page)
+	key := name + "|" + lang + "|" + pString
+	cacheItem := util.GetItemFromCache(key)
+	if cacheItem != nil {
+		return r.render(http.StatusOK, name, cacheItem.Value, c)
+	}
+	buf := r.RenderIndex(key)
 	return r.render(http.StatusOK, name, buf.Bytes(), c)
 }
 
-func (r *Render) expireIndexCallback(item *cache2go.CacheItem, name string, lang string, page int) {
-	item.SetAboutToExpireCallback(func(key interface{}) {
-		go r.addItemTocache(key.(string), name, lang, page, r.getIndexTemplate(name, lang, page))
-	})
+func (r *Render) RenderIndex(key string) bytes.Buffer {
+	splittedKey := strings.Split(key, "|")
+	lang, _ := strconv.Atoi(splittedKey[2])
+	buf := r.getIndexTemplate(splittedKey[0], splittedKey[1], lang)
+	util.AddItemToCache(key, "index", buf.Bytes(), 30*time.Second)
+	return buf
 }
 
-func (r *Render) addItemTocache(key string, name string, lang string, page int, tmpl bytes.Buffer) {
-	for _, err := r.expiringCache.Value(key); err == nil; {
-		time.Sleep(1 * time.Millisecond)
+func (r *Render) Login(name string, lang string, c echo.Context, statusCode int) error {
+	key := name + "|" + lang
+	cacheItem := util.GetItemFromCache(key)
+	if cacheItem != nil {
+		return r.render(http.StatusOK, name, cacheItem.Value, c)
 	}
-	cachedItem := r.expiringCache.Add(key, 30*time.Second, tmpl.Bytes())
-	r.expireIndexCallback(cachedItem, name, lang, page)
+	buf := r.RenderLogin(key)
+	return r.render(http.StatusOK, name, buf.Bytes(), c)
+}
+
+func (r *Render) RenderLogin(key string) bytes.Buffer {
+	splittedKey := strings.Split(key, "|")
+	buf := r.getLoginTemplate(splittedKey[0], splittedKey[1])
+	util.AddItemToCache(key, "login", buf.Bytes(), 30*time.Second)
+	return buf
 }
 
 func (r *Render) getIndexTemplate(name string, lang string, page int) bytes.Buffer {
@@ -91,6 +135,19 @@ func (r *Render) getIndexTemplate(name string, lang string, page int) bytes.Buff
 		Lang:         lang,
 		ResultCount:  len(rssList),
 		RSS:          rssList,
+		MostReadList: mostReadList,
+	})
+	if err != nil {
+		log.Println("rendering page", name, "failed.", err.Error())
+	}
+	return buf
+}
+
+func (r *Render) getLoginTemplate(name string, lang string) bytes.Buffer {
+	var buf bytes.Buffer
+	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
+	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
+		Lang:         lang,
 		MostReadList: mostReadList,
 	})
 	if err != nil {
@@ -118,33 +175,23 @@ func (r *Render) RenderSearch(name string, lang string, searchString string, pag
 	return r.render(http.StatusOK, name, buf.Bytes(), c)
 }
 
-func (r *Render) RenderByCategory(name string, lang string, category string, page int, c echo.Context, statusCode int) error {
+func (r *Render) ByCategory(name string, lang string, category string, page int, c echo.Context, statusCode int) error {
 	pString := strconv.Itoa(page)
-	key := name + "_" + category + "_" + pString
-	//log.Println("rendering byCategory", key)
-	res, err := r.expiringCache.Value(key)
-	if err == nil {
-		//log.Println("Found value in cache")
-		return r.render(http.StatusOK, name, res.Data().([]byte), c)
+	key := name + "|" + lang + "|" + category + "|" + pString
+	cacheItem := util.GetItemFromCache(key)
+	if cacheItem != nil {
+		return r.render(http.StatusOK, name, cacheItem.Value, c)
 	}
-	buf := r.getCategoryTemplate(name, lang, category, page)
-	item := r.expiringCache.Add(key, 30*time.Second, buf.Bytes())
-	go r.expireCategoryCallback(item, name, lang, category, page)
+	buf := r.RenderByCategory(key)
 	return r.render(http.StatusOK, name, buf.Bytes(), c)
 }
 
-func (r *Render) expireCategoryCallback(item *cache2go.CacheItem, name string, lang string, category string, page int) {
-	item.SetAboutToExpireCallback(func(key interface{}) {
-		go r.addCategoryItemTocache(key.(string), name, lang, category, page, *r.getCategoryTemplate(name, lang, category, page))
-	})
-}
-
-func (r *Render) addCategoryItemTocache(key string, name string, lang string, category string, page int, tmpl bytes.Buffer) {
-	for _, err := r.expiringCache.Value(key); err == nil; {
-		time.Sleep(1 * time.Millisecond)
-	}
-	cachedItem := r.expiringCache.Add(key, 30*time.Second, tmpl.Bytes())
-	r.expireCategoryCallback(cachedItem, name, lang, category, page)
+func (r *Render) RenderByCategory(key string) bytes.Buffer {
+	splittedKey := strings.Split(key, "|")
+	lang, _ := strconv.Atoi(splittedKey[3])
+	buf := r.getCategoryTemplate(splittedKey[0], splittedKey[1], splittedKey[2], lang)
+	util.AddItemToCache(key, "category", buf.Bytes(), 30*time.Second)
+	return *buf
 }
 
 func (r *Render) getCategoryTemplate(name string, lang string, category string, page int) *bytes.Buffer {
@@ -194,4 +241,25 @@ func (r *Render) render(code int, name string, data []byte, c echo.Context) (err
 	c.Response().WriteHeader(code)
 	c.Response().Write(data)
 	return
+}
+
+func (r *Render) updateStaleCacheItems() {
+	for _, item := range util.Cache.Items() {
+		cItem := item.(util.CacheItem)
+		if time.Now().After(cItem.Expire) {
+			if cItem.Type == "index" {
+				r.RenderIndex(cItem.Key)
+			} else if cItem.Type == "login" {
+				r.RenderLogin(cItem.Key)
+			} else if cItem.Type == "category" {
+				r.RenderByCategory(cItem.Key)
+			}
+		}
+	}
+}
+
+func doEvery(d time.Duration, f func()) {
+	for range time.Tick(d) {
+		f()
+	}
 }

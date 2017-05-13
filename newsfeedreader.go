@@ -31,11 +31,7 @@ type (
 	}
 )
 
-func NewApplication() *Application {
-	return &Application{}
-}
-
-func (a *Application) Init() {
+func (a *Application) Start() {
 	a.Mongo = service.NewMongo()
 	a.CookieUtil = util.NewCookieUtil()
 	a.Tick = tick.NewTick(a.Mongo)
@@ -49,8 +45,8 @@ func (a *Application) Close() {
 }
 
 func main() {
-	app := NewApplication()
-	app.Init()
+	app := &Application{}
+	app.Start()
 	e := echo.New()
 	e.Use(mw.RemoveTrailingSlashWithConfig(mw.TrailingSlashConfig{
 		RedirectCode: http.StatusMovedPermanently,
@@ -97,6 +93,8 @@ func main() {
 	e.GET("/", middleware.Root())
 	e.GET("/fi", middleware.FiRoot(app.Render))
 	e.GET("/en", middleware.EnRoot(app.Render))
+	e.GET("/fi/login", middleware.Login(app.Render, "fi"))
+	e.GET("/en/login", middleware.Login(app.Render, "en"))
 	e.GET("/fi/:page", middleware.FiRootPaged(app.Render))
 	e.GET("/en/:page", middleware.EnRootPaged(app.Render))
 	e.GET("/fi/search", middleware.FiSearch(app.Render))

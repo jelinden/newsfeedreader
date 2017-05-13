@@ -1,0 +1,47 @@
+{{define "login"}}<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=no" />
+	{{ linktag "public/css/uutispuro.css" }}
+	<meta name="description" content="{{ if eq .Lang `fi` }}Kirjaudu{{ else }}Login{{ end }} - Uusimmat uutiset - www.uutispuro.fi" />
+	{{ template "header_icons" }}
+	<meta name="msapplication-TileColor" content="#ffffff" />
+	<meta name="msapplication-TileImage" content="/public/img/mstile-144x144.png" />
+	<meta property="http://ogp.me/ns#type" content="website" />
+	<meta property="http://ogp.me/ns#title" content="{{ if eq .Lang `fi` }}Kirjaudu{{ else }}Login{{ end }} - Uutispuro" />
+	<meta property="http://ogp.me/ns#image" content="/public/img/uutispuro_logo_small.gif" />
+	<meta property="http://ogp.me/ns#url" content="https://www.uutispuro.fi/{{ if eq .Lang `fi` }}Kirjaudu{{ else }}Login{{ end }}" />
+	<meta property="http://ogp.me/ns/fb#app_id" content="222039191163874" />
+	<title>{{ if eq .Lang `fi` }}Kirjaudu{{ else }}Login{{ end }} - Uutiset rss syötteistä, uutishaku ja mediaseuranta</title>
+</head>
+<body>
+	<div id="layout">
+	    {{ template "menu_fi" }}
+		{{ template "top_bar" . }}
+		<h1 class="loginTitle">
+			{{ if eq .Lang "fi" }}Kirjaudu / Rekisteröidy{{ else }}Login / Signup{{ end }}
+		</h1>
+		<div class="flex-display row-wrap head">
+			<div class="login">
+				<form method="POST" action="/login" class="pure-form pure-form-stacked">
+					<legend>{{ if eq .Lang "fi" }}Kirjaudu{{ else }}Login{{ end }}</legend>
+					<input id="login-email" type="text" placeholder="{{ if eq .Lang `fi` }}Sähköpostiosoite{{ else }}Email{{ end }}"/>
+					<input id="login-password" type="text" placeholder="{{ if eq .Lang `fi` }}Salasana{{ else }}Password{{ end }}"/>
+					<input type="submit" class="pure-button pure-button-primary" value="{{ if eq .Lang `fi` }}Kirjaudu{{ else }}Login{{ end }}"></input>
+				</form>
+			</div>
+			<div class="signup">
+				<form method="POST" action="/signup" class="pure-form pure-form-stacked">
+					<legend>{{ if eq .Lang "fi" }}Rekisteröidy{{ else }}Signup{{ end }}</legend>
+					<input id="signup-name" type="text" placeholder="{{ if eq .Lang `fi` }}Etunimi Sukunimi{{ else }}Firstname Lastname{{ end }}"/>
+					<input id="signup-email" type="text" placeholder="{{ if eq .Lang `fi` }}Sähköpostiosoite{{ else }}Email{{ end }}"/>
+					<input id="signup-password" type="text" placeholder="{{ if eq .Lang `fi` }}Salasana{{ else }}Password{{ end }}"/>
+					<input type="submit" class="pure-button pure-button-primary" value="{{ if eq .Lang `fi` }}Rekisteröidy{{ else }}Signup{{ end }}"></input>
+				</form>
+			</div>
+		 </div>
+	</div>
+	{{ template "scripts" . }}
+</body>
+</html>
+{{end}}
