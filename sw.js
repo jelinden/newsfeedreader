@@ -1,6 +1,6 @@
 self.addEventListener('install', e => {
  e.waitUntil(
-   caches.open('uutispuro-pwa-cache').then(cache => {
+   caches.open('uutispuro-pwa-cache-1.1').then(cache => {
      return cache.addAll([
         '/en',
         '/fi',
