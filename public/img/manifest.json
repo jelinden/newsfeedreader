@@ -1,5 +1,6 @@
 {
     "name": "Uutispuro",
+    "short_name": "Uutispuro",
     "icons": [
         {
             "src": "/public/img/android-chrome-192x192.png",
