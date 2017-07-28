@@ -39,7 +39,8 @@ self.addEventListener('install', e => {
         '/public/js/socket.io-1.3.7.js',
         '/public/js/moment.2.10.6.js',
         '/public/css/uutispuro-1501267239.min.css',
-        '/public/js/uutispuro-1501267239.min.js'
+        '/public/js/uutispuro-1501267239§.min.js',
+        '/public/img/manifest.json'
      ]);
    })
  );
