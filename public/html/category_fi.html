@@ -6,8 +6,6 @@
 	<meta name="description" content="{{ .Category }} - Uusimmat uutiset - www.uutispuro.fi" />
 	{{ template "header_icons" }}
 	<link rel="alternate" hreflang="fi" href="/fi/category/{{ .Category }}" />
-	<meta name="msapplication-TileColor" content="#ffffff" />
-	<meta name="msapplication-TileImage" content="/public/img/mstile-144x144.png" />
 	<meta property="http://ogp.me/ns#type" content="website" />
 	<meta property="http://ogp.me/ns#title" content="{{ .Category }} - Uutispuro" />
 	<meta property="http://ogp.me/ns#image" content="/public/img/uutispuro_logo_small.gif" />
@@ -20,7 +18,11 @@
 	    {{ template "menu_fi" }}
 		{{ template "top_bar" . }}
 		<h1 class="searchTitle">
-			{{ if eq .Category "Naisetjamuoti" }}Naiset ja muoti{{ else }}{{ .Category }}{{ end }}
+			{{ if eq .Category "Naisetjamuoti" }}Naiset ja muoti{{ else }}
+				{{ if eq .Category "Blogs" }}Blogit{{ else }}
+					{{ .Category }}
+				{{ end }}
+			{{ end }}
 		</h1>
 		<div id="main" class="container-fluid">
 			<div class="row">

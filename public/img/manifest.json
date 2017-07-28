@@ -1,0 +1,14 @@
+{
+    "name": "Uutispuro",
+    "icons": [
+        {
+            "src": "/public/img/android-chrome-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        }
+    ],
+    "theme_color": "#ffffff",
+    "background_color": "#ffffff",
+    "start_url": "/en",
+    "display": "standalone"
+}

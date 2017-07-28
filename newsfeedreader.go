@@ -114,8 +114,8 @@ func main() {
 		c.Response().Header().Set("Expires", time.Now().AddDate(1, 0, 0).Format(http.TimeFormat))
 		return c.File(path.Join("public", c.P(0)))
 	})
-	e.File("/favicon.ico", "public/favicon.ico")
-
+	e.File("/favicon.ico", "public/img/favicon.ico")
+	e.File("/sw.js", "sw.js")
 	http.Handle("/socket.io/", server)
 
 	// hook echo with http handler
