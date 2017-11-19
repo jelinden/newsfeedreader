@@ -37,8 +37,8 @@ var precacheFiles = [
       '/public/js/sw.js',
       '/public/js/socket.io-1.3.7.js',
       '/public/js/moment.2.10.6.js',
-      '/public/css/uutispuro-1511110603.min.css',
-      '/public/js/uutispuro-1511110603.min.js',
+      '/public/css/uutispuro-1511114584.min.css',
+      '/public/js/uutispuro-1511114584.min.js',
       '/public/img/manifest.json',
       '/socket.io',
       '/socket.io/'
