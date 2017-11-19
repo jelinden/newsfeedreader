@@ -115,7 +115,10 @@ func main() {
 		return c.File(path.Join("public", c.P(0)))
 	})
 	e.File("/favicon.ico", "public/img/favicon.ico")
-	e.File("/serviceworker.js", "public/js/serviceworker.js")
+	e.GET("/serviceworker.js", func(c echo.Context) error {
+		c.Response().Header().Set("Content-Type", "application/javascript")
+		return c.File("public/js/serviceworker.js")
+	})
 	http.Handle("/socket.io/", server)
 
 	// hook echo with http handler
