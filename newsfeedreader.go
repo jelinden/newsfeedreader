@@ -115,7 +115,7 @@ func main() {
 		return c.File(path.Join("public", c.P(0)))
 	})
 	e.File("/favicon.ico", "public/img/favicon.ico")
-	e.File("/sw.js", "public/js/sw.js")
+	e.File("/serviceworker.js", "public/js/serviceworker.js")
 	http.Handle("/socket.io/", server)
 
 	// hook echo with http handler

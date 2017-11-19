@@ -1,4 +1,4 @@
-var CACHE = 'pwauutispuro-precache';
+var CACHE = 'pwauutispuro-cache';
 var precacheFiles = [
       '/en',
       '/fi',
@@ -34,10 +34,11 @@ var precacheFiles = [
       '/fi/category/naisetjamuoti/0',
       '/en/category/blogs/0',
       '/fi/category/blogs/0',
+      '/public/js/sw.js',
       '/public/js/socket.io-1.3.7.js',
       '/public/js/moment.2.10.6.js',
-      '/public/css/uutispuro-1501267239.min.css',
-      '/public/js/uutispuro-1501267239.min.js',
+      '/public/css/uutispuro-1511110603.min.css',
+      '/public/js/uutispuro-1511110603.min.js',
       '/public/img/manifest.json',
       '/socket.io',
       '/socket.io/'
@@ -91,5 +92,5 @@ function update(request) {
 
 function fromServer(request) {
   //this is the fallback if it is not in the cache to go to the server and get it
-  return fetch(request).then(function(response){ return response})
+  return fetch(request).then(function(response){ return response; })
 }

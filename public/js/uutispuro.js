@@ -106,19 +106,11 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleClass(menuLink, active);
   };
 }(this, this.document));
-/*
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js', { scope: '/' })
-  .then(function(reg) {
-    console.log('Service Worker registered successfully ' + reg.scope);
-  })
-}
-*/
 
 if (navigator.serviceWorker.controller) {
   console.log('[PWA Builder] active service worker found, no need to register')
 } else {
-  navigator.serviceWorker.register('sw.js', {
+  navigator.serviceWorker.register('serviceworker.js', {
     scope: './'
   }).then(function(reg) {
     console.log('Service worker has been registered for scope:'+ reg.scope);
