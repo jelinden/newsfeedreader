@@ -110,9 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
 if (navigator.serviceWorker.controller) {
   console.log('[PWA Builder] active service worker found, no need to register')
 } else {
-  navigator.serviceWorker.register('serviceworker.js', {
-    scope: '/'
-  }).then(function(reg) {
+  navigator.serviceWorker.register('/serviceworker.js').then(function(reg) {
     console.log('Service worker has been registered for scope:'+ reg.scope);
   });
 }
