@@ -34,7 +34,7 @@ var precacheFiles = [
       '/fi/category/naisetjamuoti/0',
       '/en/category/blogs/0',
       '/fi/category/blogs/0',
-      '/public/js/serviceworker.js',
+      '/serviceworker.js',
       '/public/js/socket.io-1.3.7.js',
       '/public/js/moment.2.10.6.js',
       '/public/css/uutispuro-1511114584.min.css',
