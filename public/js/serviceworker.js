@@ -59,7 +59,7 @@ console.log('[ServiceWorker] Claiming clients for current page');
 
 self.addEventListener('fetch', function(evt) {
   console.log('The service worker is serving the asset: '+ evt.request.url);
-  evt.respondWith(fromCache(evt.request).catch(fromServer(evt.request)));
+  evt.respondWith(fromServer(evt.request).catch(fromCache(evt.request)));
   evt.waitUntil(update(evt.request));
 });
 
