@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/jelinden/newsfeedreader",
-	"GoVersion": "go1.8",
+	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
 	"Deps": [
 		{
@@ -41,6 +41,10 @@
 			"ImportPath": "github.com/gorilla/websocket",
 			"Comment": "v1.0.0-6-gafffb15",
 			"Rev": "afffb151969cb38ce452b0e1b8d20cd91fe7cd45"
+		},
+		{
+			"ImportPath": "github.com/jelinden/hackdaycache",
+			"Rev": "8f54499934a28b38ed0b6a7c00fd075f05adbda0"
 		},
 		{
 			"ImportPath": "github.com/labstack/echo",
@@ -85,20 +89,6 @@
 		{
 			"ImportPath": "github.com/mattn/go-isatty",
 			"Rev": "56b76bdf51f7708750eac80fa38b952bb9f32639"
-		},
-		{
-			"ImportPath": "github.com/nats-io/nats",
-			"Comment": "v1.2.0-2-gaa1bffc",
-			"Rev": "aa1bffcd28c5ace76b436f25d79869de32589d3e"
-		},
-		{
-			"ImportPath": "github.com/nats-io/nats/encoders/builtin",
-			"Comment": "v1.2.0-2-gaa1bffc",
-			"Rev": "aa1bffcd28c5ace76b436f25d79869de32589d3e"
-		},
-		{
-			"ImportPath": "github.com/nats-io/nuid",
-			"Rev": "a5152d67cf63cbfb5d992a395458722a45194715"
 		},
 		{
 			"ImportPath": "github.com/pquerna/ffjson/ffjson",

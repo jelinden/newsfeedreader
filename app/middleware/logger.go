@@ -2,13 +2,14 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
-	"github.com/pquerna/ffjson/ffjson"
 	"log"
 	"net"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/labstack/echo"
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 // Logger is our custom logger
@@ -47,7 +48,7 @@ func Logger() echo.MiddlewareFunc {
 				"method":        method,
 				"path":          path,
 				"status":        code,
-				"response-time": fmt.Sprintf("%v", stop.Sub(start).Nanoseconds()),
+				"response-time": fmt.Sprintf("%.3fms", float64(stop.Sub(start).Nanoseconds())/(1e6*1.0)),
 				"size":          fmt.Sprintf("%v", size),
 			}
 			buf, _ := ffjson.Marshal(&logLine)

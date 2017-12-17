@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	cache "github.com/jelinden/hackdaycache"
 	"github.com/jelinden/newsfeedreader/app/domain"
 	"github.com/jelinden/newsfeedreader/app/service"
 	"github.com/jelinden/newsfeedreader/app/util"
@@ -44,86 +45,34 @@ func NewRender(mongo *service.Mongo) *Render {
 			"toLower": strings.ToLower,
 		}).ParseGlob("public/html/*")),
 	}
-	go doEvery(30*time.Second, render.updateStaleCacheItems)
-	go render.warmUpCache()
 	return render
 }
 
-func (r *Render) warmUpCache() {
-	keys := []string{"category_fi|fi|Urheilu|0",
-		"category_fi|fi|Matkustus|0",
-		"category_fi|fi|Ulkomaat|0",
-		"category_fi|fi|Tiede|0",
-		"category_fi|fi|Talous|0",
-		"category_fi|fi|Kulttuuri|0",
-		"category_fi|fi|Pelit|0",
-		"category_fi|fi|Viihde|0",
-		"category_fi|fi|Blogs|0",
-		"category_fi|fi|Kotimaa|0",
-		"category_fi|fi|Digi|0",
-		"category_fi|fi|Asuminen|0",
-		"category_fi|fi|Ruoka|0",
-		"category_fi|fi|Terveys|0",
-		"category_fi|fi|Elokuvat|0",
-		"category_fi|fi|Naisetjamuoti|0",
-		"category_en|en|Urheilu|0",
-		"category_en|en|Matkustus|0",
-		"category_en|en|Ulkomaat|0",
-		"category_en|en|Tiede|0",
-		"category_en|en|Talous|0",
-		"category_en|en|Kulttuuri|0",
-		"category_en|en|Pelit|0",
-		"category_en|en|Viihde|0",
-		"category_en|en|Blogs|0",
-		"category_en|en|Kotimaa|0",
-		"category_en|en|Digi|0",
-		"category_en|en|Asuminen|0",
-		"category_en|en|Ruoka|0",
-		"category_en|en|Terveys|0",
-		"category_en|en|Elokuvat|0",
-		"category_en|en|Naisetjamuoti|0",
+func addToCache(key string, fn func(key string, params ...string) []byte, params ...string) {
+	item := cache.CacheItem{
+		Key:          key,
+		Value:        fn(key, params...),
+		Expire:       time.Now().Add(20 * time.Second),
+		UpdateLength: time.Duration(20 * time.Second),
+		GetFunc:      fn,
+		FuncParams:   params,
 	}
-	r.RenderIndex("index_fi|fi|0")
-	r.RenderIndex("index_en|en|0")
-	for _, key := range keys {
-		r.RenderByCategory(key)
-	}
+	cache.AddItem(item)
 }
 
 func (r *Render) Index(name string, lang string, page int, c echo.Context, statusCode int) error {
-	pString := strconv.Itoa(page)
-	key := name + "|" + lang + "|" + pString
-	cacheItem := util.GetItemFromCache(key)
-	if cacheItem != nil {
-		return r.render(http.StatusOK, name, cacheItem.Value, c)
+	key := name + "_" + lang + "_" + strconv.Itoa(page)
+	if b := cache.GetItem(key); b != nil {
+		return r.render(http.StatusOK, name, b, c)
 	}
-	buf := r.RenderIndex(key)
-	return r.render(http.StatusOK, name, buf.Bytes(), c)
+	addToCache(key, r.RenderIndex, name, lang, strconv.Itoa(page))
+	return r.render(http.StatusOK, name, cache.GetItem(key), c)
 }
 
-func (r *Render) RenderIndex(key string) bytes.Buffer {
-	splittedKey := strings.Split(key, "|")
-	lang, _ := strconv.Atoi(splittedKey[2])
-	buf := r.getIndexTemplate(splittedKey[0], splittedKey[1], lang)
-	util.AddItemToCache(key, "index", buf.Bytes(), 30*time.Second)
-	return buf
-}
-
-func (r *Render) Login(name string, lang string, c echo.Context, statusCode int) error {
-	key := name + "|" + lang
-	cacheItem := util.GetItemFromCache(key)
-	if cacheItem != nil {
-		return r.render(http.StatusOK, name, cacheItem.Value, c)
-	}
-	buf := r.RenderLogin(key)
-	return r.render(http.StatusOK, name, buf.Bytes(), c)
-}
-
-func (r *Render) RenderLogin(key string) bytes.Buffer {
-	splittedKey := strings.Split(key, "|")
-	buf := r.getLoginTemplate(splittedKey[0], splittedKey[1])
-	util.AddItemToCache(key, "login", buf.Bytes(), 30*time.Second)
-	return buf
+func (r *Render) RenderIndex(key string, params ...string) []byte {
+	p, _ := strconv.Atoi(params[2])
+	buf := r.getIndexTemplate(params[0], params[1], p)
+	return buf.Bytes()
 }
 
 func (r *Render) getIndexTemplate(name string, lang string, page int) bytes.Buffer {
@@ -141,6 +90,15 @@ func (r *Render) getIndexTemplate(name string, lang string, page int) bytes.Buff
 		log.Println("rendering page", name, "failed.", err.Error())
 	}
 	return buf
+}
+
+func (r *Render) Login(name string, lang string, c echo.Context, statusCode int) error {
+	buf := r.RenderLogin(name, lang)
+	return r.render(http.StatusOK, name, buf.Bytes(), c)
+}
+
+func (r *Render) RenderLogin(name string, lang string) bytes.Buffer {
+	return r.getLoginTemplate(name, lang)
 }
 
 func (r *Render) getLoginTemplate(name string, lang string) bytes.Buffer {
@@ -176,22 +134,18 @@ func (r *Render) RenderSearch(name string, lang string, searchString string, pag
 }
 
 func (r *Render) ByCategory(name string, lang string, category string, page int, c echo.Context, statusCode int) error {
-	pString := strconv.Itoa(page)
-	key := name + "|" + lang + "|" + category + "|" + pString
-	cacheItem := util.GetItemFromCache(key)
-	if cacheItem != nil {
-		return r.render(http.StatusOK, name, cacheItem.Value, c)
+	key := name + "_" + lang + "_" + category + "_" + strconv.Itoa(page)
+	if b := cache.GetItem(key); b != nil {
+		return r.render(http.StatusOK, name, b, c)
 	}
-	buf := r.RenderByCategory(key)
-	return r.render(http.StatusOK, name, buf.Bytes(), c)
+	addToCache(key, r.RenderByCategory, name, lang, category, strconv.Itoa(page))
+	return r.render(http.StatusOK, name, cache.GetItem(key), c)
+
 }
 
-func (r *Render) RenderByCategory(key string) bytes.Buffer {
-	splittedKey := strings.Split(key, "|")
-	lang, _ := strconv.Atoi(splittedKey[3])
-	buf := r.getCategoryTemplate(splittedKey[0], splittedKey[1], splittedKey[2], lang)
-	util.AddItemToCache(key, "category", buf.Bytes(), 30*time.Second)
-	return *buf
+func (r *Render) RenderByCategory(key string, params ...string) []byte {
+	p, _ := strconv.Atoi(params[3])
+	return r.getCategoryTemplate(params[0], params[1], params[2], p).Bytes()
 }
 
 func (r *Render) getCategoryTemplate(name string, lang string, category string, page int) *bytes.Buffer {
@@ -217,7 +171,22 @@ func (r *Render) getCategoryTemplate(name string, lang string, category string, 
 	return &buf
 }
 
-func (r *Render) RenderBySource(name string, lang string, source string, page int, c echo.Context, statusCode int) error {
+func (r *Render) BySource(name string, lang string, source string, page int, c echo.Context, statusCode int) error {
+	key := name + "_" + lang + "_" + source + "_" + strconv.Itoa(page)
+	if b := cache.GetItem(key); b != nil {
+		return r.render(http.StatusOK, name, b, c)
+	}
+	addToCache(key, r.RenderBySource, name, lang, source, strconv.Itoa(page))
+	return r.render(http.StatusOK, name, cache.GetItem(key), c)
+
+}
+
+func (r *Render) RenderBySource(key string, params ...string) []byte {
+	p, _ := strconv.Atoi(params[3])
+	return r.getSourceTemplate(params[0], params[1], params[2], p).Bytes()
+}
+
+func (r *Render) getSourceTemplate(name string, lang string, source string, page int) *bytes.Buffer {
 	var buf bytes.Buffer
 	rssList := r.Mongo.FetchRssItemsBySource(lang, source, page, 30)
 	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
@@ -231,9 +200,8 @@ func (r *Render) RenderBySource(name string, lang string, source string, page in
 	})
 	if err != nil {
 		log.Println("rendering page", name, "failed.", err.Error())
-		return err
 	}
-	return r.render(http.StatusOK, name, buf.Bytes(), c)
+	return &buf
 }
 
 func (r *Render) render(code int, name string, data []byte, c echo.Context) (err error) {
@@ -241,25 +209,4 @@ func (r *Render) render(code int, name string, data []byte, c echo.Context) (err
 	c.Response().WriteHeader(code)
 	c.Response().Write(data)
 	return
-}
-
-func (r *Render) updateStaleCacheItems() {
-	for _, item := range util.Cache.Items() {
-		cItem := item.(util.CacheItem)
-		if time.Now().After(cItem.Expire) {
-			if cItem.Type == "index" {
-				r.RenderIndex(cItem.Key)
-			} else if cItem.Type == "login" {
-				r.RenderLogin(cItem.Key)
-			} else if cItem.Type == "category" {
-				r.RenderByCategory(cItem.Key)
-			}
-		}
-	}
-}
-
-func doEvery(d time.Duration, f func()) {
-	for range time.Tick(d) {
-		f()
-	}
 }

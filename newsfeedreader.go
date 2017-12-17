@@ -11,6 +11,7 @@ import (
 	"github.com/googollee/go-socket.io"
 	"github.com/jelinden/newsfeedreader/app/middleware"
 	"github.com/jelinden/newsfeedreader/app/render"
+	"github.com/jelinden/newsfeedreader/app/routes"
 	"github.com/jelinden/newsfeedreader/app/service"
 	"github.com/jelinden/newsfeedreader/app/tick"
 	"github.com/jelinden/newsfeedreader/app/util"
@@ -27,7 +28,6 @@ type (
 		CookieUtil *util.CookieUtil
 		Tick       *tick.Tick
 		Render     *render.Render
-		Nats       *middleware.Nats
 	}
 )
 
@@ -36,7 +36,6 @@ func (a *Application) Start() {
 	a.CookieUtil = util.NewCookieUtil()
 	a.Tick = tick.NewTick(a.Mongo)
 	a.Render = render.NewRender(a.Mongo)
-	a.Nats = middleware.NewNats()
 }
 
 func (a *Application) Close() {
@@ -54,7 +53,6 @@ func main() {
 	e.Use(mw.Gzip())
 	e.Use(mw.Recover())
 	e.Use(middleware.Logger())
-	e.Use(middleware.NatsHandler(app.Nats))
 
 	defer app.Close()
 	go app.Tick.TickNews("fi")
@@ -90,22 +88,22 @@ func main() {
 		log.Println("socketio error:", err)
 	})
 
-	e.GET("/", middleware.Root())
-	e.GET("/fi", middleware.FiRoot(app.Render))
-	e.GET("/en", middleware.EnRoot(app.Render))
-	e.GET("/fi/login", middleware.Login(app.Render, "fi"))
-	e.GET("/en/login", middleware.Login(app.Render, "en"))
-	e.GET("/fi/:page", middleware.FiRootPaged(app.Render))
-	e.GET("/en/:page", middleware.EnRootPaged(app.Render))
-	e.GET("/fi/search", middleware.FiSearch(app.Render))
-	e.GET("/en/search", middleware.EnSearch(app.Render))
-	e.GET("/fi/search/:page", middleware.FiSearchPaged(app.Render))
-	e.GET("/en/search/:page", middleware.EnSearchPaged(app.Render))
-	e.GET("/fi/category/:category/:page", middleware.FiCategory(app.Render))
-	e.GET("/en/category/:category/:page", middleware.EnCategory(app.Render))
-	e.GET("/fi/source/:source/:page", middleware.FiSource(app.Render))
-	e.GET("/en/source/:source/:page", middleware.EnSource(app.Render))
-	e.GET("/api/click/:id", middleware.Click(app.Mongo))
+	e.GET("/", routes.Root())
+	e.GET("/fi", routes.FiRoot(app.Render))
+	e.GET("/en", routes.EnRoot(app.Render))
+	e.GET("/fi/login", routes.Login(app.Render, "fi"))
+	e.GET("/en/login", routes.Login(app.Render, "en"))
+	e.GET("/fi/:page", routes.FiRootPaged(app.Render))
+	e.GET("/en/:page", routes.EnRootPaged(app.Render))
+	e.GET("/fi/search", routes.FiSearch(app.Render))
+	e.GET("/en/search", routes.EnSearch(app.Render))
+	e.GET("/fi/search/:page", routes.FiSearchPaged(app.Render))
+	e.GET("/en/search/:page", routes.EnSearchPaged(app.Render))
+	e.GET("/fi/category/:category/:page", routes.FiCategory(app.Render))
+	e.GET("/en/category/:category/:page", routes.EnCategory(app.Render))
+	e.GET("/fi/source/:source/:page", routes.FiSource(app.Render))
+	e.GET("/en/source/:source/:page", routes.EnSource(app.Render))
+	e.GET("/api/click/:id", routes.Click(app.Mongo))
 
 	var secondsInAYear = 365 * 24 * 60 * 60
 	e.GET("/public*", func(c echo.Context) error {
@@ -124,8 +122,8 @@ func main() {
 	// hook echo with http handler
 	std := standard.WithConfig(engine.Config{})
 	std.SetHandler(e)
-	//http2.ConfigureServer(std.Server, nil)
 	http2.ConfigureServer(std.Server, &http2.Server{})
 	http.Handle("/", std)
+	log.Println("Starting up server at port 1300")
 	log.Fatal(http.ListenAndServe(":1300", nil))
 }

@@ -1,4 +1,4 @@
-package middleware
+package routes
 
 import (
 	"net/http"
@@ -9,15 +9,14 @@ import (
 	"github.com/jelinden/newsfeedreader/app/render"
 	"github.com/jelinden/newsfeedreader/app/service"
 	"github.com/jelinden/newsfeedreader/app/util"
+
 	"github.com/labstack/echo"
 )
 
 func Root() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		lang := c.Request().Header().Get("Accept-Language")
-		if lang == "" {
-			return c.Redirect(http.StatusFound, "/fi")
-		} else if strings.Contains(strings.Split(lang, ",")[0], "en") {
+		if strings.Contains(lang, "en") {
 			return c.Redirect(http.StatusFound, "/en")
 		}
 		return c.Redirect(http.StatusFound, "/fi")
@@ -121,10 +120,10 @@ func FiSource(render *render.Render) echo.HandlerFunc {
 		category := util.ToUpper(c.P(0))
 		if page, err := strconv.Atoi(c.P(1)); err == nil {
 			if page < 999 && page >= 0 {
-				return render.RenderBySource("source_fi", "fi", validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
+				return render.BySource("source_fi", "fi", validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
 			}
 		}
-		return render.RenderBySource("source_fi", "fi", validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
+		return render.BySource("source_fi", "fi", validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
 	}
 }
 func EnSource(render *render.Render) echo.HandlerFunc {
@@ -132,10 +131,10 @@ func EnSource(render *render.Render) echo.HandlerFunc {
 		category := util.ToUpper(c.P(0))
 		if page, err := strconv.Atoi(c.P(1)); err == nil {
 			if page < 999 && page >= 0 {
-				return render.RenderBySource("source_en", "en", validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
+				return render.BySource("source_en", "en", validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
 			}
 		}
-		return render.RenderBySource("source_en", "en", validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
+		return render.BySource("source_en", "en", validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
 	}
 }
 func Click(mgo *service.Mongo) echo.HandlerFunc {
