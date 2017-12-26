@@ -52,12 +52,14 @@ func addToCache(key string, fn func(key string, params ...string) []byte, params
 	item := cache.CacheItem{
 		Key:          key,
 		Value:        fn(key, params...),
-		Expire:       time.Now().Add(20 * time.Second),
-		UpdateLength: time.Duration(20 * time.Second),
+		Expire:       time.Now().Add(30 * time.Second),
+		UpdateLength: time.Duration(30 * time.Second),
 		GetFunc:      fn,
 		FuncParams:   params,
 	}
-	cache.AddItem(item)
+	if b := cache.GetItem(key); b == nil {
+		cache.AddItem(item)
+	}
 }
 
 func (r *Render) Index(name string, lang string, page int, c echo.Context, statusCode int) error {
