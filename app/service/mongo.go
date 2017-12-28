@@ -1,13 +1,14 @@
 package service
 
 import (
+	"log"
+	"os"
+	"time"
+
 	"github.com/jelinden/newsfeedreader/app/domain"
 	"github.com/jelinden/newsfeedreader/app/util"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"log"
-	"os"
-	"time"
 )
 
 type M map[string]interface{}
@@ -78,6 +79,7 @@ func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
 	dateTo := time.Now()
 	dateFrom := dateTo.AddDate(0, 0, -7)
 	sess := m.mongo.Clone()
+	defer sess.Close()
 	c := sess.DB("news").C("newscollection")
 	query := M{
 		"language": lang,
@@ -90,7 +92,6 @@ func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
 	}
-	sess.Close()
 	return result
 }
 
@@ -102,12 +103,12 @@ func (m *Mongo) Search(searchString string, lang string, from int, count int) []
 
 	result := []domain.RSS{}
 	sess := m.mongo.Clone()
+	defer sess.Close()
 	c := sess.DB("news").C("newscollection")
 	err := c.Find(query).Select(M{"rssDesc": 0}).Select(bson.M{"score": bson.M{"$meta": "textScore"}}).Sort("-pubDate", "$textScore:score").Skip(from * count).Limit(count).All(&result)
 	if err != nil {
 		log.Println("Mongo error " + err.Error())
 	}
-	sess.Close()
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
 	}
@@ -117,21 +118,21 @@ func (m *Mongo) Search(searchString string, lang string, from int, count int) []
 func (m *Mongo) query(query map[string]interface{}, from int, count int) []domain.RSS {
 	result := []domain.RSS{}
 	sess := m.mongo.Clone()
+	defer sess.Close()
 	c := sess.DB("news").C("newscollection")
 	err := c.Find(query).Select(M{"rssDesc": 0}).Sort("-pubDate").Skip(from * count).Limit(count).All(&result)
 	if err != nil {
 		log.Println("Mongo error " + err.Error())
 	}
-	sess.Close()
 	return result
 }
 
 func (m *Mongo) SaveClick(id string) {
 	s := m.mongo.Clone()
+	defer s.Close()
 	c := s.DB("news").C("newscollection")
 	_, err := c.UpsertId(bson.ObjectIdHex(id), M{"$inc": M{"clicks": 1}})
 	if err != nil {
 		log.Println("upsert error", id, err.Error())
 	}
-	s.Close()
 }
