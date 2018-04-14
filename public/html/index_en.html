@@ -2,7 +2,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, user-scalable=no" />
-	{{ linktag "public/css/uutispuro.css" }}
+	{{ linktag "public/css/uutispuro.css" "rel" "preload" "as" "style" "type" "text/css"}}
+	{{ linktag "public/css/uutispuro.css" "rel" "stylesheet"}}
 	<meta name="description" content="Latest news from rss feeds, business, economy, travel, digital media - www.uutispuro.fi" />
 	{{ template "header_icons" }}
 	<link rel="alternate" hreflang="fi" href="/fi/" />

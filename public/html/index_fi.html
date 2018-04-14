@@ -2,7 +2,8 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, user-scalable=no" />
-	{{ linktag "public/css/uutispuro.css" }}
+	{{ linktag "public/css/uutispuro.css" "rel" "preload" "as" "style" "type" "text/css"}}
+	{{ linktag "public/css/uutispuro.css" "rel" "stylesheet"}}
 	<meta name="description" content="Uutiset, uutishaku ja mediaseuranta rss syötteistä, talous, media, digi, kulttuuri, viihde - www.uutispuro.fi" />
 	{{ template "header_icons" }}
 	<link rel="alternate" hreflang="en" href="/en/" />
