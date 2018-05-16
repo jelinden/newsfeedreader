@@ -1,11 +1,14 @@
-# newsfeedreader
+# Newsfeedreader
 
 First of all, you need to set up correct environment variable for MONGO_URL.
 For example ```127.0.0.1:27017```.
 
-Git clone the project
+## Get the project
+Run ```go get github.com/jelinden/newsfeedreader```
 
-Run ```go get```
+## Build the project
+```go build```
 
-and ```go build && bash minify.sh && ./newsfeedreader```
-should get you running.
+## Running the project
+```go build && bash minify.sh && ./newsfeedreader```
+
