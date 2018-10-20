@@ -3,12 +3,14 @@ package socketio
 import (
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 type baseHandler struct {
 	events    map[string]*caller
 	name      string
 	broadcast BroadcastAdaptor
+	evMu      sync.Mutex
 }
 
 func newBaseHandler(name string, broadcast BroadcastAdaptor) *baseHandler {
@@ -16,6 +18,7 @@ func newBaseHandler(name string, broadcast BroadcastAdaptor) *baseHandler {
 		events:    make(map[string]*caller),
 		name:      name,
 		broadcast: broadcast,
+		evMu:      sync.Mutex{},
 	}
 }
 
@@ -25,12 +28,15 @@ func (h *baseHandler) On(event string, f interface{}) error {
 	if err != nil {
 		return err
 	}
+	h.evMu.Lock()
 	h.events[event] = c
+	h.evMu.Unlock()
 	return nil
 }
 
 type socketHandler struct {
 	*baseHandler
+	acksmu sync.Mutex
 	acks   map[int]*caller
 	socket *socket
 	rooms  map[string]struct{}
@@ -38,13 +44,16 @@ type socketHandler struct {
 
 func newSocketHandler(s *socket, base *baseHandler) *socketHandler {
 	events := make(map[string]*caller)
+	base.evMu.Lock()
 	for k, v := range base.events {
 		events[k] = v
 	}
+	base.evMu.Unlock()
 	return &socketHandler{
 		baseHandler: &baseHandler{
 			events:    events,
 			broadcast: base.broadcast,
+			evMu:      base.evMu,
 		},
 		acks:   make(map[int]*caller),
 		socket: s,
@@ -71,7 +80,9 @@ func (h *socketHandler) Emit(event string, args ...interface{}) error {
 		if err != nil {
 			return err
 		}
+		h.acksmu.Lock()
 		h.acks[id] = c
+		h.acksmu.Unlock()
 		return nil
 	}
 	return h.socket.send(args)
@@ -125,6 +136,12 @@ func (h *baseHandler) broadcastName(room string) string {
 }
 
 func (h *socketHandler) onPacket(decoder *decoder, packet *packet) ([]interface{}, error) {
+	defer func() {
+		if decoder != nil {
+			decoder.Close()
+		}
+	}()
+
 	var message string
 	switch packet.Type {
 	case _CONNECT:
@@ -142,7 +159,9 @@ func (h *socketHandler) onPacket(decoder *decoder, packet *packet) ([]interface{
 			message = decoder.Message()
 		}
 	}
+	h.evMu.Lock()
 	c, ok := h.events[message]
+	h.evMu.Unlock()
 	if !ok {
 		// If the message is not recognized by the server, the decoder.currentCloser
 		// needs to be closed otherwise the server will be stuck until the e
@@ -181,11 +200,14 @@ func (h *socketHandler) onPacket(decoder *decoder, packet *packet) ([]interface{
 }
 
 func (h *socketHandler) onAck(id int, decoder *decoder, packet *packet) error {
+	h.acksmu.Lock()
 	c, ok := h.acks[id]
 	if !ok {
+		h.acksmu.Unlock()
 		return nil
 	}
 	delete(h.acks, id)
+	h.acksmu.Unlock()
 
 	args := c.GetArgs()
 	packet.Data = &args
