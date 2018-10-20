@@ -1,35 +1,36 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path"
-	"strings"
 	"time"
 
-	"github.com/googollee/go-socket.io"
 	"github.com/jelinden/newsfeedreader/app/middleware"
 	"github.com/jelinden/newsfeedreader/app/render"
 	"github.com/jelinden/newsfeedreader/app/routes"
 	"github.com/jelinden/newsfeedreader/app/service"
 	"github.com/jelinden/newsfeedreader/app/tick"
 	"github.com/jelinden/newsfeedreader/app/util"
+	"github.com/kabukky/httpscerts"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine"
-	"github.com/labstack/echo/engine/standard"
 	mw "github.com/labstack/echo/middleware"
-	"golang.org/x/net/http2"
+	"golang.org/x/net/websocket"
 )
 
-type (
-	Application struct {
-		Mongo      *service.Mongo
-		CookieUtil *util.CookieUtil
-		Tick       *tick.Tick
-		Render     *render.Render
-	}
-)
+type Application struct {
+	Mongo      *service.Mongo
+	CookieUtil *util.CookieUtil
+	Tick       *tick.Tick
+	Render     *render.Render
+}
+
+var app *Application
+
+const secondsInAYear = 365 * 24 * 60 * 60
 
 func (a *Application) Start() {
 	a.Mongo = service.NewMongo()
@@ -43,50 +44,32 @@ func (a *Application) Close() {
 	a.Mongo.Close()
 }
 
+func environment() string {
+	env := flag.String("env", "", "-env local")
+	flag.Parse()
+	if *env != "local" && *env != "prod" {
+		fmt.Println("------\nEnvironment flag missing (-env local|prod)\n------")
+		os.Exit(-1)
+	}
+	return *env
+}
+
 func main() {
-	app := &Application{}
+	env := environment()
+	app = &Application{}
 	app.Start()
+	defer app.Close()
+
 	e := echo.New()
 	e.Use(mw.RemoveTrailingSlashWithConfig(mw.TrailingSlashConfig{
 		RedirectCode: http.StatusMovedPermanently,
 	}))
 	e.Use(mw.Gzip())
-	e.Use(mw.Recover())
 	e.Use(middleware.Logger())
+	e.Use(mw.Recover())
 
-	defer app.Close()
 	go app.Tick.TickNews("fi")
 	go app.Tick.TickNews("en")
-	server, err := socketio.NewServer(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	go app.Tick.TickEmit(server)
-	server.On("connection", func(so socketio.Socket) {
-		ref := so.Request().Referer()
-		var referer string
-		if strings.Contains(ref, "https") {
-			referer = strings.Replace(ref, "https://", "", 1)
-		} else {
-			referer = strings.Replace(ref, "http://", "", 1)
-		}
-
-		pathArr := strings.Split(referer, "/")
-		var path = ""
-		if len(pathArr) > 1 {
-			path = pathArr[1]
-		}
-
-		log.Println("connecting to", path)
-		so.Join(path)
-
-		so.On("disconnection", func() {
-			so.Leave(path)
-		})
-	})
-	server.On("error", func(so socketio.Socket, err error) {
-		log.Println("socketio error:", err)
-	})
 
 	e.GET("/", routes.Root())
 	e.GET("/fi", routes.FiRoot(app.Render))
@@ -105,25 +88,70 @@ func main() {
 	e.GET("/en/source/:source/:page", routes.EnSource(app.Render))
 	e.GET("/api/click/:id", routes.Click(app.Mongo))
 
-	var secondsInAYear = 365 * 24 * 60 * 60
-	e.GET("/public*", func(c echo.Context) error {
-		c.Response().Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public, must-revalidate, proxy-revalidate", secondsInAYear))
-		c.Response().Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
-		c.Response().Header().Set("Expires", time.Now().AddDate(1, 0, 0).Format(http.TimeFormat))
-		return c.File(path.Join("public", c.P(0)))
-	})
+	e.GET("/public/:filePath/:fileName", static)
 	e.File("/favicon.ico", "public/img/favicon.ico")
+	e.File("/sitemap.xml", "public/sitemap.xml")
+	e.File("/public/sitemap.xml", "public/sitemap.xml")
 	e.GET("/serviceworker.js", func(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/javascript")
 		return c.File("public/js/serviceworker.js")
 	})
-	http.Handle("/socket.io/", server)
 
-	// hook echo with http handler
-	std := standard.WithConfig(engine.Config{})
-	std.SetHandler(e)
-	http2.ConfigureServer(std.Server, &http2.Server{})
-	http.Handle("/", std)
-	log.Println("Starting up server at port 1300")
-	log.Fatal(http.ListenAndServe(":1300", nil))
+	e.GET("/ws/:channel", hello)
+
+	err := httpscerts.Check("cert.pem", "key.pem")
+	if err != nil {
+		err = httpscerts.Generate("cert.pem", "key.pem", "localdev.uutispuro.fi:443")
+		if err != nil {
+			log.Fatal("Error: Couldn't create https certs.")
+		}
+	}
+	if env == "prod" {
+		log.Fatal(e.Start(":1300"))
+	}
+	log.Fatal(e.TLSServer.ListenAndServeTLS("cert.pem", "key.pem"))
+}
+
+func static(c echo.Context) error {
+	filePath := c.Param("filePath")
+	if filePath == "js" || filePath == "img" || filePath == "css" {
+		c.Response().Header().Set("Cache-Control", fmt.Sprintf("max-age=%d, public, must-revalidate, proxy-revalidate", secondsInAYear))
+		c.Response().Header().Set("Last-Modified", time.Now().Format(http.TimeFormat))
+		c.Response().Header().Set("Expires", time.Now().AddDate(1, 0, 0).Format(http.TimeFormat))
+		return c.File(path.Join("public", c.Param("filePath"), c.Param("fileName")))
+	}
+	return c.JSONBlob(http.StatusNotFound, nil)
+}
+
+func hello(c echo.Context) error {
+	channel := c.Param("channel")
+
+	websocket.Handler(func(ws *websocket.Conn) {
+		defer ws.Close()
+		for {
+			if channel == "fi" {
+				websocket.Message.Send(ws, app.Tick.NewsFi)
+			}
+			if channel == "en" {
+				websocket.Message.Send(ws, app.Tick.NewsEn)
+			}
+			// check finnish channels
+			//server.BroadcastTo("fi", "message", t.newsFi)
+			time.Sleep(5 * time.Second)
+			// Write
+			//err := websocket.Message.Send(ws, "Hello, Client!")
+			//if err != nil {
+			//	c.Logger().Error(err)
+			//}
+
+			// Read
+			//msg := ""
+			//err = websocket.Message.Receive(ws, &msg)
+			//if err != nil {
+			//	c.Logger().Error(err)
+			//}
+			//fmt.Printf("%s\n", msg)
+		}
+	}).ServeHTTP(c.Response(), c.Request())
+	return nil
 }
