@@ -1,3 +1,5 @@
 newsfeedreader
 access.log
 rethinkdb_data
+cert.pem
+key.pem
