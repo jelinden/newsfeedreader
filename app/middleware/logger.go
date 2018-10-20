@@ -20,10 +20,10 @@ func Logger() echo.MiddlewareFunc {
 			req := c.Request()
 			res := c.Response()
 
-			remoteAddr := req.RemoteAddress()
-			if ip := req.Header().Get(echo.HeaderXRealIP); ip != "" {
+			remoteAddr := req.RemoteAddr
+			if ip := req.Header.Get(echo.HeaderXRealIP); ip != "" {
 				remoteAddr = ip
-			} else if ip = req.Header().Get(echo.HeaderXForwardedFor); ip != "" {
+			} else if ip = req.Header.Get(echo.HeaderXForwardedFor); ip != "" {
 				remoteAddr = ip
 			} else {
 				remoteAddr, _, _ = net.SplitHostPort(remoteAddr)
@@ -33,13 +33,13 @@ func Logger() echo.MiddlewareFunc {
 				c.Error(err)
 			}
 
-			method := req.Method()
-			path := req.URL().Path()
+			method := req.Method
+			path := req.URL.Path
 			if path == "" {
 				path = "/"
 			}
-			size := res.Size()
-			code := strconv.Itoa(res.Status())
+			size := res.Size
+			code := strconv.Itoa(res.Status)
 
 			stop := time.Now()
 			logLine := map[string]string{
