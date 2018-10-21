@@ -97,7 +97,7 @@ func main() {
 		return c.File("public/js/serviceworker.js")
 	})
 
-	e.GET("/ws/:channel", hello)
+	e.GET("/ws/:channel", ws)
 
 	err := httpscerts.Check("cert.pem", "key.pem")
 	if err != nil {
@@ -123,34 +123,20 @@ func static(c echo.Context) error {
 	return c.JSONBlob(http.StatusNotFound, nil)
 }
 
-func hello(c echo.Context) error {
+func ws(c echo.Context) error {
 	channel := c.Param("channel")
-
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
 		for {
+			deadLineWS := ws
+			deadLineWS.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			if channel == "fi" {
 				websocket.Message.Send(ws, app.Tick.NewsFi)
 			}
 			if channel == "en" {
 				websocket.Message.Send(ws, app.Tick.NewsEn)
 			}
-			// check finnish channels
-			//server.BroadcastTo("fi", "message", t.newsFi)
-			time.Sleep(5 * time.Second)
-			// Write
-			//err := websocket.Message.Send(ws, "Hello, Client!")
-			//if err != nil {
-			//	c.Logger().Error(err)
-			//}
-
-			// Read
-			//msg := ""
-			//err = websocket.Message.Receive(ws, &msg)
-			//if err != nil {
-			//	c.Logger().Error(err)
-			//}
-			//fmt.Printf("%s\n", msg)
+			time.Sleep(10 * time.Second)
 		}
 	}).ServeHTTP(c.Response(), c.Request())
 	return nil
