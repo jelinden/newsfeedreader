@@ -1,29 +1,52 @@
 window.onload = function() {
+    startWS();
+};
+
+function startWS() {
     if (location.pathname === "/fi" || location.pathname === "/en") {
         var lang = location.pathname === "/fi" ? "fi" : "en";
-        var lastId;
-
         var wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
         var socket = new WebSocket(wsProtocol + "://" + window.location.hostname + ":" + window.location.port + "/ws/" + lang, wsProtocol);
 
         socket.onmessage = function(msg) {
             if (msg.data) {
-                const json = JSON.parse(msg.data);
-                if (json && json.news) {
-                    if (json.news.length > 0 && lastId !== json.news[0].id) {
-                        for (var i = 4; i >= 0; i--) {
-                            if (document.getElementById(json.news[i].id) === null) {
-                                var item = makeNode(json, i, lang);
-                                prepend(item);
-                            }
-                        }
-                        lastId = json.news[0].id;
-                    }
-                }
+                handleMessage(msg.data, lang);
+            }
+        };
+
+        socket.onopen = function() {
+            if (window.timerID) {
+                window.clearTimeout(window.timerID);
+                window.timerID = 0;
+            }
+        };
+
+        socket.onclose = function() {
+            socket = null;
+            if (!window.timerID) {
+                window.timerID = setTimeout(function() {
+                    startWS();
+                }, 5000);
             }
         };
     }
-};
+}
+
+function handleMessage(data, lang) {
+    var lastId = -999;
+    const json = JSON.parse(data);
+    if (json && json.news) {
+        if (json.news.length > 0 && lastId !== json.news[0].id) {
+            for (var i = 4; i >= 0; i--) {
+                if (document.getElementById(json.news[i].id) === null) {
+                    var item = makeNode(json, i, lang);
+                    prepend(item);
+                }
+            }
+            lastId = json.news[0].id;
+        }
+    }
+}
 
 var prepend = function(firstElement) {
     var parent = document.getElementById("news-container");
