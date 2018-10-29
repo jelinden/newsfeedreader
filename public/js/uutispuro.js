@@ -2,11 +2,13 @@ window.onload = function() {
     startWS();
 };
 
+const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+
 function startWS() {
     if (location.pathname === "/fi" || location.pathname === "/en") {
         var lang = location.pathname === "/fi" ? "fi" : "en";
-        var wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
-        var socket = new WebSocket(wsProtocol + "://" + window.location.hostname + ":" + window.location.port + "/ws/" + lang, wsProtocol);
+        var wsURL = wsProtocol + "://" + window.location.hostname + ":" + window.location.port + "/ws/";
+        var socket = new WebSocket(wsURL + lang, wsProtocol);
 
         socket.onmessage = function(msg) {
             if (msg.data) {
@@ -15,6 +17,7 @@ function startWS() {
         };
 
         socket.onopen = function() {
+            console.log("ws socket open");
             if (window.timerID) {
                 window.clearTimeout(window.timerID);
                 window.timerID = 0;
@@ -23,10 +26,19 @@ function startWS() {
 
         socket.onclose = function() {
             socket = null;
+            console.log("ws socket closed", !window.timerID);
             if (!window.timerID) {
                 window.timerID = setTimeout(function() {
                     startWS();
-                }, 5000);
+                }, 8000);
+            }
+        };
+
+        socket.onerror = function() {
+            console.log("ws socket error");
+            if (window.timerID) {
+                window.clearTimeout(window.timerID);
+                window.timerID = 0;
             }
         };
     }

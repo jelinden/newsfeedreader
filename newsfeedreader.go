@@ -128,8 +128,7 @@ func ws(c echo.Context) error {
 	websocket.Handler(func(ws *websocket.Conn) {
 		defer ws.Close()
 		for {
-			deadLineWS := ws
-			deadLineWS.SetWriteDeadline(time.Now().Add(5 * time.Second))
+			ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			if channel == "fi" {
 				websocket.Message.Send(ws, app.Tick.NewsFi)
 			}
