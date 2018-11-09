@@ -1,4 +1,5 @@
 {{define "category_fi"}}<html>
+
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, user-scalable=no" />
@@ -14,47 +15,55 @@
 	<meta property="http://ogp.me/ns/fb#app_id" content="222039191163874" />
 	<title>{{ .Category }} - Uutiset rss syötteistä, uutishaku ja mediaseuranta</title>
 </head>
+
 <body>
 	<div id="layout">
-	    {{ template "menu_fi" }}
+		{{ template "menu_fi" }}
 		{{ template "top_bar" . }}
 		<h1 class="searchTitle">
 			{{ if eq .Category "Naisetjamuoti" }}Naiset ja muoti{{ else }}
-				{{ if eq .Category "Blogs" }}Blogit{{ else }}
-					{{ .Category }}
-				{{ end }}
+			{{ if eq .Category "Blogs" }}Blogit{{ else }}
+			{{ .Category }}
+			{{ end }}
 			{{ end }}
 		</h1>
 		<div id="main" class="container-fluid">
 			<div class="row">
 				<div class="col-xs-12 col-sm-7 col-md-7 col-lg-8">
 					<div id="news-container">
-				       	{{ range .RSS }}
-				            <div class="item">
-				                <div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
-							 --><div class="source">{{ .RssSource }}</div><!--
-						  	 --><div class="category"><a href="/fi/category/{{ toLower .Category.CategoryName }}/0">{{ if eq .Category.CategoryName "Naisetjamuoti" }}Naiset ja muoti{{ else }}{{ .Category.CategoryName }}{{ end }}</a></div>
-				                <div class="link">
-				                   <a class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}">{{ .RssTitle }}</a>
-				                </div>
-				           </div>
-				       	{{end}}
-		   			</div>
-				   	<div class="paging">
-					   {{ if gt .Page 0 }}<span class="prev"><a href="/fi/category/{{ toLower .Category }}/{{ minus .Page 1 }}">Edelliset</a></span>{{ end }}
-					   {{ if lt .Page 1 }}<span class="light">Edelliset</span>{{ end }}
-					   {{ if and (lt .Page 100) (eq .ResultCount 30) }}<span class="next"><a href="/fi/category/{{ toLower .Category }}/{{ add .Page 1 }}">Seuraavat</a></span>{{ end }}
-					   {{ if or (gt .Page 99) (lt .ResultCount 30) }}<span class="light">Seuraavat</span>{{ end }}
+						{{ range .RSS }}
+						<div class="item">
+							<div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div>
+							<!--
+							 -->
+							<div class="source">{{ .RssSource }}</div>
+							<!--
+						  	 -->
+							<div class="category"><a href="/fi/category/{{ toLower .Category.CategoryName }}/0" hreflang="fi">{{ if eq .Category.CategoryName "Naisetjamuoti"
+									}}Naiset ja muoti{{ else }}{{ .Category.CategoryName }}{{ end }}</a></div>
+							<div class="link">
+								<a class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}" hreflang="fi">{{ .RssTitle }}</a>
+							</div>
+						</div>
+						{{end}}
 					</div>
-				   	{{ template "footer" }}
+					<div class="paging">
+						{{ if gt .Page 0 }}<span class="prev"><a href="/fi/category/{{ toLower .Category }}/{{ minus .Page 1 }}">Edelliset</a></span>{{ end }}
+						{{ if lt .Page 1 }}<span class="light">Edelliset</span>{{ end }}
+						{{ if and (lt .Page 100) (eq .ResultCount 30) }}<span class="next"><a href="/fi/category/{{ toLower .Category }}/{{ add .Page 1 }}">Seuraavat</a></span>{{
+						end }}
+						{{ if or (gt .Page 99) (lt .ResultCount 30) }}<span class="light">Seuraavat</span>{{ end }}
+					</div>
+					{{ template "footer" }}
 				</div>
 				<div class="col-xs-12 col-sm-5 col-md-5 col-lg-4">
 					{{ template "mostread_fi" . }}
 				</div>
 			</div>
-		 </div>
-	  </div>
-	  {{ template "scripts" . }}
+		</div>
+	</div>
+	{{ template "scripts" . }}
 </body>
+
 </html>
 {{end}}
