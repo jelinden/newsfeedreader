@@ -34,8 +34,10 @@
 							<div class="source">{{ .RssSource }}</div>
 							<!--
 						  	 -->
-							<div class="category"><a href="/fi/category/{{ toLower .Category.CategoryName }}/0" hreflang="fi">{{ if eq .Category.CategoryName "Naisetjamuoti"
-									}}Naiset ja muoti{{ else }}{{ .Category.CategoryName }}{{ end }}</a></div>
+							<div class="category">
+								<a href="/fi/category/{{ toLower .Category.CategoryName }}/0" hreflang="fi">
+									{{ if eq .Category.CategoryName "Naisetjamuoti"}}Naiset ja muoti{{ else }}{{ .Category.CategoryName }}{{ end }}</a>
+							</div>
 							<div class="link">
 								<a class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}" hreflang="fi">{{ .RssTitle }}</a>
 							</div>
