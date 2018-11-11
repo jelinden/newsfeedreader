@@ -109,12 +109,13 @@ func main() {
 			log.Fatal("Error: Couldn't create https certs.")
 		}
 	}
-	if env == "prod" {
-		log.Fatal(e.Start(":1300"))
-	}
 	hystrixStreamHandler := hystrix.NewStreamHandler()
 	hystrixStreamHandler.Start()
 	go http.ListenAndServe(net.JoinHostPort("0.0.0.0", "8181"), hystrixStreamHandler)
+
+	if env == "prod" {
+		log.Fatal(e.Start(":1300"))
+	}
 	log.Fatal(e.TLSServer.ListenAndServeTLS("cert.pem", "key.pem"))
 }
 
