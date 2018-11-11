@@ -13,14 +13,12 @@ import (
 	"github.com/labstack/echo"
 )
 
-func Root() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		lang := c.Request().Header.Get("Accept-Language")
-		if strings.Contains(lang, "en") {
-			return c.Redirect(http.StatusFound, "/en")
-		}
-		return c.Redirect(http.StatusFound, "/fi")
+func Root(c echo.Context) error {
+	lang := c.Request().Header.Get("Accept-Language")
+	if strings.Contains(lang, "en") {
+		return c.Redirect(http.StatusFound, "/en")
 	}
+	return c.Redirect(http.StatusFound, "/fi")
 }
 
 func FiRoot(render *render.Render) echo.HandlerFunc {

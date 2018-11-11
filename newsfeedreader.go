@@ -4,11 +4,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path"
 	"time"
 
+	"github.com/afex/hystrix-go/hystrix"
 	"github.com/jelinden/newsfeedreader/app/middleware"
 	"github.com/jelinden/newsfeedreader/app/render"
 	"github.com/jelinden/newsfeedreader/app/routes"
@@ -67,11 +69,12 @@ func main() {
 	e.Use(mw.Gzip())
 	e.Use(middleware.Logger())
 	e.Use(mw.Recover())
+	e.Use(middleware.Hystrix())
 
 	go app.Tick.TickNews("fi")
 	go app.Tick.TickNews("en")
 
-	e.GET("/", routes.Root())
+	e.GET("/", routes.Root)
 	e.GET("/fi", routes.FiRoot(app.Render))
 	e.GET("/en", routes.EnRoot(app.Render))
 	e.GET("/fi/login", routes.Login(app.Render, "fi"))
@@ -109,6 +112,9 @@ func main() {
 	if env == "prod" {
 		log.Fatal(e.Start(":1300"))
 	}
+	hystrixStreamHandler := hystrix.NewStreamHandler()
+	hystrixStreamHandler.Start()
+	go http.ListenAndServe(net.JoinHostPort("0.0.0.0", "8181"), hystrixStreamHandler)
 	log.Fatal(e.TLSServer.ListenAndServeTLS("cert.pem", "key.pem"))
 }
 
