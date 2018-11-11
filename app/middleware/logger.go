@@ -29,9 +29,7 @@ func Logger() echo.MiddlewareFunc {
 				remoteAddr, _, _ = net.SplitHostPort(remoteAddr)
 			}
 
-			if err := next(c); err != nil {
-				c.Error(err)
-			}
+			resp := next(c)
 
 			method := req.Method
 			path := req.URL.Path
@@ -62,7 +60,7 @@ func Logger() echo.MiddlewareFunc {
 			logger.SetOutput(f)
 
 			logger.Println(string(buf))
-			return nil
+			return resp
 		}
 	}
 }
