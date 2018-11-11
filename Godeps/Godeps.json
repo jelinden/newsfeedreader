@@ -4,6 +4,18 @@
 	"GodepVersion": "v79",
 	"Deps": [
 		{
+			"ImportPath": "github.com/afex/hystrix-go/hystrix",
+			"Rev": "fa1af6a1f4f56e0e50d427fe901cd604d8c6fb8a"
+		},
+		{
+			"ImportPath": "github.com/afex/hystrix-go/hystrix/metric_collector",
+			"Rev": "fa1af6a1f4f56e0e50d427fe901cd604d8c6fb8a"
+		},
+		{
+			"ImportPath": "github.com/afex/hystrix-go/hystrix/rolling",
+			"Rev": "fa1af6a1f4f56e0e50d427fe901cd604d8c6fb8a"
+		},
+		{
 			"ImportPath": "github.com/dgrijalva/jwt-go",
 			"Comment": "v3.2.0-4-g3af4c74",
 			"Rev": "3af4c746e1c248ee8491a3e0c6f7a9cd831e95f8"
