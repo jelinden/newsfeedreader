@@ -1,0 +1,58 @@
+# github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5
+github.com/afex/hystrix-go/hystrix
+github.com/afex/hystrix-go/hystrix/metric_collector
+github.com/afex/hystrix-go/hystrix/rolling
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
+# github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb
+github.com/googollee/go-engine.io
+github.com/googollee/go-engine.io/message
+github.com/googollee/go-engine.io/parser
+github.com/googollee/go-engine.io/polling
+github.com/googollee/go-engine.io/transport
+github.com/googollee/go-engine.io/websocket
+# github.com/googollee/go-socket.io v0.0.0-20180921171217-25e1f67559cf
+github.com/googollee/go-socket.io
+# github.com/gorilla/websocket v0.0.0-20181012020131-76e4896901ef
+github.com/gorilla/websocket
+# github.com/jelinden/hackdaycache v0.0.0-20171216160210-8f54499934a2
+github.com/jelinden/hackdaycache
+# github.com/kabukky/httpscerts v0.0.0-20150320125433-617593d7dcb3
+github.com/kabukky/httpscerts
+# github.com/labstack/echo v0.0.0-20181015073126-ba1891b3dc1f
+github.com/labstack/echo
+github.com/labstack/echo/middleware
+# github.com/labstack/gommon v0.2.7
+github.com/labstack/gommon/color
+github.com/labstack/gommon/log
+github.com/labstack/gommon/bytes
+github.com/labstack/gommon/random
+# github.com/mattn/go-colorable v0.0.9
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.3
+github.com/mattn/go-isatty
+# github.com/pquerna/ffjson v0.0.0-20180717144149-af8b230fcd20
+github.com/pquerna/ffjson/ffjson
+github.com/pquerna/ffjson/fflib/v1
+github.com/pquerna/ffjson/fflib/v1/internal
+# github.com/rsniezynski/go-asset-helper v0.0.0-20150405181857-38e753e5e853
+github.com/rsniezynski/go-asset-helper
+# github.com/streamrail/concurrent-map v0.0.0-20160823150647-8bf1e9bacbf6
+github.com/streamrail/concurrent-map
+# github.com/valyala/bytebufferpool v0.0.0-20180905182247-cdfbe9377474
+github.com/valyala/bytebufferpool
+# github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4
+github.com/valyala/fasttemplate
+# golang.org/x/crypto v0.0.0-20181015023909-0c41d7ab0a0e
+golang.org/x/crypto/acme/autocert
+golang.org/x/crypto/acme
+# golang.org/x/net v0.0.0-20181017193950-04a2e542c03f
+golang.org/x/net/websocket
+# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
+golang.org/x/sys/unix
+# gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
+gopkg.in/mgo.v2/bson
+gopkg.in/mgo.v2
+gopkg.in/mgo.v2/internal/json
+gopkg.in/mgo.v2/internal/sasl
+gopkg.in/mgo.v2/internal/scram
