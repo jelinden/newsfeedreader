@@ -1,9 +1,10 @@
 package util
 
 import (
-	"github.com/jelinden/newsfeedreader/app/domain"
 	"time"
 	"unicode"
+
+	"github.com/jelinden/newsfeedreader/app/domain"
 )
 
 func DoEvery(d time.Duration, f func(time.Time)) {
@@ -59,7 +60,10 @@ func EnCategoryName(cat string) string {
 }
 
 func ToUpper(textString string) string {
-	text := []rune(textString)
-	text[0] = unicode.ToUpper(text[0])
-	return string(text)
+	if textString != "" {
+		text := []rune(textString)
+		text[0] = unicode.ToUpper(text[0])
+		return string(text)
+	}
+	return textString
 }
