@@ -11,6 +11,9 @@ import (
 func Hystrix() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			hystrix.ConfigureCommand(c.Request().RequestURI, hystrix.CommandConfig{
+				Timeout: 2000,
+			})
 			hystrix.Do(c.Request().RequestURI, func() error {
 				return next(c)
 			}, func(err error) error {
