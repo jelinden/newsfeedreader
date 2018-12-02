@@ -1,7 +1,7 @@
 module github.com/jelinden/newsfeedreader
 
 require (
-	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5
+	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5 // indirect
 	github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb // indirect
 	github.com/googollee/go-socket.io v0.0.0-20180921171217-25e1f67559cf
 	github.com/gorilla/websocket v0.0.0-20181012020131-76e4896901ef // indirect
