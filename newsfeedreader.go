@@ -4,13 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"path"
 	"time"
 
-	"github.com/afex/hystrix-go/hystrix"
 	"github.com/jelinden/newsfeedreader/app/middleware"
 	"github.com/jelinden/newsfeedreader/app/render"
 	"github.com/jelinden/newsfeedreader/app/routes"
@@ -73,7 +71,6 @@ func main() {
 	go app.Tick.TickNews("en")
 
 	paths := e.Group("/")
-	paths.Use(middleware.Hystrix())
 	paths.Use(mw.Gzip())
 	paths.Use(middleware.Logger())
 	paths.GET("", routes.Root)
@@ -112,9 +109,6 @@ func main() {
 			log.Fatal("Error: Couldn't create https certs.")
 		}
 	}
-	hystrixStreamHandler := hystrix.NewStreamHandler()
-	hystrixStreamHandler.Start()
-	go http.ListenAndServe(net.JoinHostPort("0.0.0.0", "8181"), hystrixStreamHandler)
 
 	if env == "prod" {
 		log.Fatal(e.Start(":1300"))
