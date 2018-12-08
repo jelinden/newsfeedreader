@@ -17,9 +17,12 @@ type Mongo struct {
 	mongo *mgo.Session
 }
 
+var mongoConn Mongo
+
 func NewMongo() *Mongo {
 	m := &Mongo{}
 	m.mongo = m.createSession(os.Getenv("MONGO_URL"))
+	mongoConn = *m
 	return m
 }
 
@@ -135,4 +138,20 @@ func (m *Mongo) SaveClick(id string) {
 	if err != nil {
 		log.Println("upsert error", id, err.Error())
 	}
+}
+
+func News(searchString string) []domain.RSS {
+	var result = []domain.RSS{}
+	query := M{
+		"$text":    M{"$search": `"` + searchString + `"`, "$language": "en"},
+		"language": "en",
+	}
+	sess := mongoConn.mongo.Clone()
+	defer sess.Close()
+	c := sess.DB("news").C("newscollection")
+	err := c.Find(query).Select(M{"rssDesc": 0}).Select(bson.M{"score": bson.M{"$meta": "textScore"}}).Sort("-pubDate", "$textScore:score").Limit(20).All(&result)
+	if err != nil {
+		log.Println("Mongo error " + err.Error())
+	}
+	return result
 }

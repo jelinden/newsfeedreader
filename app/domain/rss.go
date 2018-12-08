@@ -1,8 +1,9 @@
 package domain
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 type RSS struct {
@@ -11,16 +12,16 @@ type RSS struct {
 	RssLink   string        `json:"rssLink" bson:"rssLink"`
 	PubDate   time.Time     `json:"pubDate" bson:"pubDate"`
 	RssSource string        `json:"rssSource" bson:"rssSource"`
-	Clicks    int           `json:"clicks" bson:"clicks"`
+	Clicks    int           `json:"-" bson:"clicks"`
 	Language  string        `json:"language" bson:"language"`
 	Category  Category      `json:"category" bson:"category"`
-	RssFeed   RssFeed       `json:"rssFeed" bson:"rssFeed"`
+	RssFeed   RssFeed       `json:"-" bson:"rssFeed"`
 }
 
 type Category struct {
 	Id             bson.ObjectId `json:"id" bson:"_id"`
 	CategoryName   string        `json:"categoryName" bson:"categoryName"`
-	CategoryEnName string        `json:"categoryEnName" bson:"-"`
+	CategoryEnName string        `json:"-" bson:"-"`
 }
 
 type RssFeed struct {

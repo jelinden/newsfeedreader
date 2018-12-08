@@ -100,6 +100,7 @@ func main() {
 		return c.File("public/js/serviceworker.js")
 	})
 
+	paths.GET("api/news", routes.News)
 	paths.GET("ws/:channel", ws)
 
 	err := httpscerts.Check("cert.pem", "key.pem")
