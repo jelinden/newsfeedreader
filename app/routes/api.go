@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/jelinden/newsfeedreader/app/domain"
 	"github.com/jelinden/newsfeedreader/app/service"
 	"github.com/labstack/echo"
 )
@@ -13,7 +14,7 @@ func News(c echo.Context) error {
 	params := c.QueryParam("q")
 	paramSlice := validateParams(strings.Split(params, ","))
 	p := `"` + strings.Join(paramSlice, `" "`) + `"`
-	news := service.News(p)
+	news := NewsItems{Items: service.News(p)}
 	return c.JSON(http.StatusOK, news)
 }
 
@@ -22,4 +23,8 @@ func validateParams(params []string) []string {
 		params[i] = validateAndCorrectifySearchTerm(item)
 	}
 	return params
+}
+
+type NewsItems struct {
+	Items []domain.RSS `json:"items"`
 }
