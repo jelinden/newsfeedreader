@@ -84,10 +84,25 @@ func main() {
 	paths.GET("en/search", routes.EnSearch(app.Render))
 	paths.GET("fi/search/:page", routes.FiSearchPaged(app.Render))
 	paths.GET("en/search/:page", routes.EnSearchPaged(app.Render))
+
 	paths.GET("fi/category/:category/:page", routes.FiCategory(app.Render))
 	paths.GET("en/category/:category/:page", routes.EnCategory(app.Render))
 	paths.GET("fi/source/:source/:page", routes.FiSource(app.Render))
 	paths.GET("en/source/:source/:page", routes.EnSource(app.Render))
+	paths.GET("fi/category/:category", redirect)
+	paths.GET("en/category/:category", redirect)
+	paths.GET("fi/source/:source", redirect)
+	paths.GET("en/source/:source", redirect)
+
+	paths.GET("uutiset/fi", func(c echo.Context) error {
+		c.Response().Header().Set("Location", "/fi/0")
+		return c.NoContent(http.StatusMovedPermanently)
+	})
+	paths.GET("uutiset/en", func(c echo.Context) error {
+		c.Response().Header().Set("Location", "/en/0")
+		return c.NoContent(http.StatusMovedPermanently)
+	})
+
 	paths.GET("api/click/:id", routes.Click(app.Mongo))
 
 	paths.GET("public/:filePath/:fileName", static)
@@ -115,6 +130,11 @@ func main() {
 		log.Fatal(e.Start(":1300"))
 	}
 	log.Fatal(e.TLSServer.ListenAndServeTLS("cert.pem", "key.pem"))
+}
+
+func redirect(c echo.Context) error {
+	c.Response().Header().Set("Location", c.Request().URL.Path+"/0")
+	return c.NoContent(http.StatusMovedPermanently)
 }
 
 func static(c echo.Context) error {
