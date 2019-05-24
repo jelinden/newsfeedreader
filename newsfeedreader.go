@@ -109,6 +109,7 @@ func main() {
 	paths.File("favicon.ico", "public/img/favicon.ico")
 	paths.File("sitemap.xml", "public/sitemap.xml")
 	paths.File("robots.txt", "public/robots.txt")
+	paths.File("ads.txt", "public/ads.txt")
 	paths.File("public/sitemap.xml", "public/sitemap.xml")
 	paths.GET("serviceworker.js", func(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/javascript")
