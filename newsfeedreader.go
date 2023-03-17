@@ -16,8 +16,8 @@ import (
 	"github.com/jelinden/newsfeedreader/app/tick"
 	"github.com/jelinden/newsfeedreader/app/util"
 	"github.com/kabukky/httpscerts"
-	"github.com/labstack/echo"
-	mw "github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	mw "github.com/labstack/echo/v4/middleware"
 	"golang.org/x/net/websocket"
 )
 

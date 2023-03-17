@@ -6,7 +6,7 @@ import (
 
 	"github.com/jelinden/newsfeedreader/app/domain"
 	"github.com/jelinden/newsfeedreader/app/service"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // News returns news items as json

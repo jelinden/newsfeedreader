@@ -1,11 +1,13 @@
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 ## explicit
-github.com/dgrijalva/jwt-go
-# github.com/gofrs/uuid v4.0.0+incompatible
+# github.com/gofrs/uuid v4.4.0+incompatible
 ## explicit
 github.com/gofrs/uuid
-# github.com/gomodule/redigo v1.8.4
-## explicit; go 1.14
+# github.com/golang-jwt/jwt v3.2.2+incompatible
+## explicit
+github.com/golang-jwt/jwt
+# github.com/gomodule/redigo v1.8.9
+## explicit; go 1.16
 github.com/gomodule/redigo/redis
 # github.com/googollee/go-socket.io v1.7.0
 ## explicit; go 1.16
@@ -20,7 +22,7 @@ github.com/googollee/go-socket.io/engineio/transport/polling
 github.com/googollee/go-socket.io/engineio/transport/utils
 github.com/googollee/go-socket.io/engineio/transport/websocket
 github.com/googollee/go-socket.io/parser
-# github.com/gorilla/websocket v1.4.2
+# github.com/gorilla/websocket v1.5.0
 ## explicit; go 1.12
 github.com/gorilla/websocket
 # github.com/jelinden/hackdaycache v0.0.0-20171216160210-8f54499934a2
@@ -31,19 +33,21 @@ github.com/jelinden/hackdaycache
 github.com/kabukky/httpscerts
 # github.com/labstack/echo v3.3.10+incompatible
 ## explicit
-github.com/labstack/echo
-github.com/labstack/echo/middleware
+# github.com/labstack/echo/v4 v4.10.2
+## explicit; go 1.17
+github.com/labstack/echo/v4
+github.com/labstack/echo/v4/middleware
 # github.com/labstack/gommon v0.4.0
 ## explicit; go 1.12
 github.com/labstack/gommon/bytes
 github.com/labstack/gommon/color
 github.com/labstack/gommon/log
 github.com/labstack/gommon/random
-# github.com/mattn/go-colorable v0.1.11
-## explicit; go 1.13
+# github.com/mattn/go-colorable v0.1.13
+## explicit; go 1.15
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.14
-## explicit; go 1.12
+# github.com/mattn/go-isatty v0.0.17
+## explicit; go 1.15
 github.com/mattn/go-isatty
 # github.com/pquerna/ffjson v0.0.0-20190930134022-aa0246cd15f7
 ## explicit
@@ -68,6 +72,10 @@ golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 # golang.org/x/net v0.8.0
 ## explicit; go 1.17
+golang.org/x/net/http/httpguts
+golang.org/x/net/http2
+golang.org/x/net/http2/h2c
+golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/websocket
 # golang.org/x/sys v0.6.0
@@ -79,6 +87,9 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+# golang.org/x/time v0.3.0
+## explicit
+golang.org/x/time/rate
 # gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 ## explicit
 gopkg.in/mgo.v2
