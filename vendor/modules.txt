@@ -1,54 +1,88 @@
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
+## explicit
 github.com/dgrijalva/jwt-go
-# github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb
-github.com/googollee/go-engine.io
-github.com/googollee/go-engine.io/message
-github.com/googollee/go-engine.io/parser
-github.com/googollee/go-engine.io/polling
-github.com/googollee/go-engine.io/transport
-github.com/googollee/go-engine.io/websocket
-# github.com/googollee/go-socket.io v0.0.0-20180921171217-25e1f67559cf
+# github.com/gofrs/uuid v4.0.0+incompatible
+## explicit
+github.com/gofrs/uuid
+# github.com/gomodule/redigo v1.8.4
+## explicit; go 1.14
+github.com/gomodule/redigo/redis
+# github.com/googollee/go-socket.io v1.7.0
+## explicit; go 1.16
 github.com/googollee/go-socket.io
-# github.com/gorilla/websocket v0.0.0-20181012020131-76e4896901ef
+github.com/googollee/go-socket.io/engineio
+github.com/googollee/go-socket.io/engineio/frame
+github.com/googollee/go-socket.io/engineio/packet
+github.com/googollee/go-socket.io/engineio/payload
+github.com/googollee/go-socket.io/engineio/session
+github.com/googollee/go-socket.io/engineio/transport
+github.com/googollee/go-socket.io/engineio/transport/polling
+github.com/googollee/go-socket.io/engineio/transport/utils
+github.com/googollee/go-socket.io/engineio/transport/websocket
+github.com/googollee/go-socket.io/parser
+# github.com/gorilla/websocket v1.4.2
+## explicit; go 1.12
 github.com/gorilla/websocket
 # github.com/jelinden/hackdaycache v0.0.0-20171216160210-8f54499934a2
+## explicit
 github.com/jelinden/hackdaycache
 # github.com/kabukky/httpscerts v0.0.0-20150320125433-617593d7dcb3
+## explicit
 github.com/kabukky/httpscerts
-# github.com/labstack/echo v0.0.0-20181015073126-ba1891b3dc1f
+# github.com/labstack/echo v3.3.10+incompatible
+## explicit
 github.com/labstack/echo
 github.com/labstack/echo/middleware
-# github.com/labstack/gommon v0.2.7
+# github.com/labstack/gommon v0.4.0
+## explicit; go 1.12
+github.com/labstack/gommon/bytes
 github.com/labstack/gommon/color
 github.com/labstack/gommon/log
-github.com/labstack/gommon/bytes
 github.com/labstack/gommon/random
-# github.com/mattn/go-colorable v0.0.9
+# github.com/mattn/go-colorable v0.1.11
+## explicit; go 1.13
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.3
+# github.com/mattn/go-isatty v0.0.14
+## explicit; go 1.12
 github.com/mattn/go-isatty
-# github.com/pquerna/ffjson v0.0.0-20180717144149-af8b230fcd20
+# github.com/pquerna/ffjson v0.0.0-20190930134022-aa0246cd15f7
+## explicit
 github.com/pquerna/ffjson/ffjson
 github.com/pquerna/ffjson/fflib/v1
 github.com/pquerna/ffjson/fflib/v1/internal
 # github.com/rsniezynski/go-asset-helper v0.0.0-20150405181857-38e753e5e853
+## explicit
 github.com/rsniezynski/go-asset-helper
 # github.com/streamrail/concurrent-map v0.0.0-20160823150647-8bf1e9bacbf6
+## explicit
 github.com/streamrail/concurrent-map
-# github.com/valyala/bytebufferpool v0.0.0-20180905182247-cdfbe9377474
+# github.com/valyala/bytebufferpool v1.0.0
+## explicit
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4
+# github.com/valyala/fasttemplate v1.2.2
+## explicit; go 1.12
 github.com/valyala/fasttemplate
-# golang.org/x/crypto v0.0.0-20181015023909-0c41d7ab0a0e
-golang.org/x/crypto/acme/autocert
+# golang.org/x/crypto v0.7.0
+## explicit; go 1.17
 golang.org/x/crypto/acme
-# golang.org/x/net v0.0.0-20181017193950-04a2e542c03f
+golang.org/x/crypto/acme/autocert
+# golang.org/x/net v0.8.0
+## explicit; go 1.17
+golang.org/x/net/idna
 golang.org/x/net/websocket
-# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
+# golang.org/x/sys v0.6.0
+## explicit; go 1.17
 golang.org/x/sys/unix
-# gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
-gopkg.in/mgo.v2/bson
+# golang.org/x/text v0.8.0
+## explicit; go 1.17
+golang.org/x/text/secure/bidirule
+golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+# gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
+## explicit
 gopkg.in/mgo.v2
+gopkg.in/mgo.v2/bson
 gopkg.in/mgo.v2/internal/json
 gopkg.in/mgo.v2/internal/sasl
 gopkg.in/mgo.v2/internal/scram

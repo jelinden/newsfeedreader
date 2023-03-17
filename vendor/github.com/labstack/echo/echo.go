@@ -138,7 +138,7 @@ const (
 	OPTIONS = http.MethodOptions
 	PATCH   = http.MethodPatch
 	POST    = http.MethodPost
-	//PROPFIND = "PROPFIND"
+	// PROPFIND = "PROPFIND"
 	PUT   = http.MethodPut
 	TRACE = http.MethodTrace
 )
@@ -166,7 +166,8 @@ const (
 
 const (
 	charsetUTF8 = "charset=UTF-8"
-	PROPFIND    = "PROPFIND"
+	// PROPFIND Method can be used on collection and property resources.
+	PROPFIND = "PROPFIND"
 )
 
 // Headers
@@ -219,7 +220,8 @@ const (
 )
 
 const (
-	Version = "3.3.dev"
+	// Version of Echo
+	Version = "3.3.10-dev"
 	website = "https://echo.labstack.com"
 	// http://patorjk.com/software/taag/#p=display&f=Small%20Slant&t=Echo
 	banner = `
@@ -619,10 +621,6 @@ func (e *Echo) StartTLS(address string, certFile, keyFile string) (err error) {
 
 // StartAutoTLS starts an HTTPS server using certificates automatically installed from https://letsencrypt.org.
 func (e *Echo) StartAutoTLS(address string) error {
-	if e.Listener == nil {
-		go http.ListenAndServe(":http", e.AutoTLSManager.HTTPHandler(nil))
-	}
-
 	s := e.TLSServer
 	s.TLSConfig = new(tls.Config)
 	s.TLSConfig.GetCertificate = e.AutoTLSManager.GetCertificate
@@ -686,7 +684,7 @@ func (e *Echo) Close() error {
 	return e.Server.Close()
 }
 
-// Shutdown stops server the gracefully.
+// Shutdown stops the server gracefully.
 // It internally calls `http.Server#Shutdown()`.
 func (e *Echo) Shutdown(ctx stdContext.Context) error {
 	if err := e.TLSServer.Shutdown(ctx); err != nil {
@@ -709,6 +707,7 @@ func (he *HTTPError) Error() string {
 	return fmt.Sprintf("code=%d, message=%v", he.Code, he.Message)
 }
 
+// SetInternal sets error to HTTPError.Internal
 func (he *HTTPError) SetInternal(err error) *HTTPError {
 	he.Internal = err
 	return he

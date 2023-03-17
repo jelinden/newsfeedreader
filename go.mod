@@ -1,19 +1,30 @@
 module github.com/jelinden/newsfeedreader
 
+go 1.19
+
 require (
-	github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5 // indirect
-	github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb // indirect
-	github.com/googollee/go-socket.io v0.0.0-20180921171217-25e1f67559cf
-	github.com/gorilla/websocket v0.0.0-20181012020131-76e4896901ef // indirect
+	github.com/googollee/go-socket.io v1.7.0
 	github.com/jelinden/hackdaycache v0.0.0-20171216160210-8f54499934a2
 	github.com/kabukky/httpscerts v0.0.0-20150320125433-617593d7dcb3
-	github.com/labstack/echo v0.0.0-20181015073126-ba1891b3dc1f
-	github.com/pquerna/ffjson v0.0.0-20180717144149-af8b230fcd20
+	github.com/labstack/echo v3.3.10+incompatible
+	github.com/pquerna/ffjson v0.0.0-20190930134022-aa0246cd15f7
 	github.com/rsniezynski/go-asset-helper v0.0.0-20150405181857-38e753e5e853
+	golang.org/x/net v0.8.0
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
+)
+
+require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/gofrs/uuid v4.0.0+incompatible // indirect
+	github.com/gomodule/redigo v1.8.4 // indirect
+	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/labstack/gommon v0.4.0 // indirect
+	github.com/mattn/go-colorable v0.1.11 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/streamrail/concurrent-map v0.0.0-20160823150647-8bf1e9bacbf6 // indirect
-	github.com/valyala/bytebufferpool v0.0.0-20180905182247-cdfbe9377474 // indirect
-	golang.org/x/crypto v0.0.0-20181015023909-0c41d7ab0a0e // indirect
-	golang.org/x/net v0.0.0-20181017193950-04a2e542c03f
-	golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e // indirect
-	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasttemplate v1.2.2 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 )
