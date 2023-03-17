@@ -11,4 +11,5 @@ COPY public /app/public
 COPY manifest.json /app/manifest.json
 EXPOSE 1300
 ENV MONGO_URL 192.168.0.5:27017
-CMD ["./newsfeedreader"]
+ENTRYPOINT ["./newsfeedreader", "-env", "prod"]
+# use http://localhost:1300/fi

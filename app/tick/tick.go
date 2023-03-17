@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/googollee/go-socket.io"
+	socketio "github.com/googollee/go-socket.io"
 	"github.com/jelinden/newsfeedreader/app/service"
 )
 
@@ -43,7 +43,7 @@ func (t *Tick) TickNews(lang string) {
 
 func (t *Tick) TickEmit(server *socketio.Server) {
 	for _ = range time.Tick(10 * time.Second) {
-		server.BroadcastTo("en", "message", t.NewsEn)
-		server.BroadcastTo("fi", "message", t.NewsFi)
+		server.BroadcastToNamespace("en", "message", t.NewsEn)
+		server.BroadcastToNamespace("fi", "message", t.NewsFi)
 	}
 }
