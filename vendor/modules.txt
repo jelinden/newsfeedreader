@@ -1,5 +1,10 @@
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+# github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 ## explicit
+github.com/globalsign/mgo
+github.com/globalsign/mgo/bson
+github.com/globalsign/mgo/internal/json
+github.com/globalsign/mgo/internal/sasl
+github.com/globalsign/mgo/internal/scram
 # github.com/gofrs/uuid v4.4.0+incompatible
 ## explicit
 github.com/gofrs/uuid
@@ -31,8 +36,6 @@ github.com/jelinden/hackdaycache
 # github.com/kabukky/httpscerts v0.0.0-20150320125433-617593d7dcb3
 ## explicit
 github.com/kabukky/httpscerts
-# github.com/labstack/echo v3.3.10+incompatible
-## explicit
 # github.com/labstack/echo/v4 v4.10.2
 ## explicit; go 1.17
 github.com/labstack/echo/v4
@@ -92,8 +95,5 @@ golang.org/x/text/unicode/norm
 golang.org/x/time/rate
 # gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 ## explicit
-gopkg.in/mgo.v2
 gopkg.in/mgo.v2/bson
 gopkg.in/mgo.v2/internal/json
-gopkg.in/mgo.v2/internal/sasl
-gopkg.in/mgo.v2/internal/scram
