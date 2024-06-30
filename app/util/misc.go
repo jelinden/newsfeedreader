@@ -26,7 +26,7 @@ func EnCategoryName(cat string) string {
 		return "Digital media"
 	} else if cat == "Elokuvat" {
 		return "TV and movies"
-	} else if cat == "Koti" || cat == "Asuminen" {
+	} else if cat == "Koti" || cat == "Asuminen" || cat == "Koti ja asuminen" {
 		return "Home and living"
 	} else if cat == "Kotimaa" {
 		return "Domestic"
@@ -54,6 +54,8 @@ func EnCategoryName(cat string) string {
 		return "Blogs"
 	} else if cat == "Naisetjamuoti" {
 		return "Women and fashion"
+	} else if cat == "Muoti" {
+		return "Fashion"
 	} else {
 		return ""
 	}
