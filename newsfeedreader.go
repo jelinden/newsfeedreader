@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,7 +14,6 @@ import (
 	"github.com/jelinden/newsfeedreader/app/service"
 	"github.com/jelinden/newsfeedreader/app/tick"
 	"github.com/jelinden/newsfeedreader/app/util"
-	"github.com/kabukky/httpscerts"
 	"github.com/labstack/echo/v4"
 	mw "github.com/labstack/echo/v4/middleware"
 	"golang.org/x/net/websocket"
@@ -33,7 +31,7 @@ var app *Application
 const secondsInAYear = 365 * 24 * 60 * 60
 
 func (a *Application) Start() {
-	a.Mongo = service.NewMongo()
+	a.Mongo = service.NewMongo(os.Getenv("MONGO_URL"))
 	a.CookieUtil = util.NewCookieUtil()
 	a.Tick = tick.NewTick(a.Mongo)
 	a.Render = render.NewRender(a.Mongo)
@@ -44,18 +42,7 @@ func (a *Application) Close() {
 	a.Mongo.Close()
 }
 
-func environment() string {
-	env := flag.String("env", "", "-env local")
-	flag.Parse()
-	if *env != "local" && *env != "prod" {
-		fmt.Println("------\nEnvironment flag missing (-env local|prod)\n------")
-		os.Exit(-1)
-	}
-	return *env
-}
-
 func main() {
-	env := environment()
 	app = &Application{}
 	app.Start()
 	defer app.Close()
@@ -119,18 +106,7 @@ func main() {
 	paths.GET("api/news", routes.News)
 	paths.GET("ws/:channel", ws)
 
-	err := httpscerts.Check("cert.pem", "key.pem")
-	if err != nil {
-		err = httpscerts.Generate("cert.pem", "key.pem", "localdev.uutispuro.fi:443")
-		if err != nil {
-			log.Fatal("Error: Couldn't create https certs.")
-		}
-	}
-
-	if env == "prod" {
-		log.Fatal(e.Start(":1300"))
-	}
-	log.Fatal(e.TLSServer.ListenAndServeTLS("cert.pem", "key.pem"))
+	log.Fatal(e.Start(":1300"))
 }
 
 func redirect(c echo.Context) error {
@@ -161,7 +137,7 @@ func ws(c echo.Context) error {
 			if channel == "en" {
 				websocket.Message.Send(ws, app.Tick.NewsEn)
 			}
-			time.Sleep(10 * time.Second)
+			time.Sleep(15 * time.Second)
 		}
 	}).ServeHTTP(c.Response(), c.Request())
 	return nil

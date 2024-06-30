@@ -3,32 +3,32 @@ package domain
 import (
 	"time"
 
-	"gopkg.in/mgo.v2/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RSS struct {
-	Id        bson.ObjectId `json:"id" bson:"_id"`
-	RssTitle  string        `json:"rssTitle" bson:"rssTitle"`
-	RssLink   string        `json:"rssLink" bson:"rssLink"`
-	PubDate   time.Time     `json:"pubDate" bson:"pubDate"`
-	RssSource string        `json:"rssSource" bson:"rssSource"`
-	Clicks    int           `json:"-" bson:"clicks"`
-	Language  string        `json:"language" bson:"language"`
-	Category  Category      `json:"category" bson:"category"`
-	RssFeed   RssFeed       `json:"-" bson:"rssFeed"`
+	Id        primitive.ObjectID `json:"id" bson:"_id"`
+	RssTitle  string             `json:"rssTitle" bson:"rssTitle"`
+	RssLink   string             `json:"rssLink" bson:"rssLink"`
+	PubDate   time.Time          `json:"pubDate" bson:"pubDate"`
+	RssSource string             `json:"rssSource" bson:"rssSource"`
+	Clicks    int                `json:"-" bson:"clicks"`
+	Language  string             `json:"language" bson:"language"`
+	Category  Category           `json:"category" bson:"category"`
+	RssFeed   RssFeed            `json:"-" bson:"rssFeed"`
 }
 
 type Category struct {
-	Id             bson.ObjectId `json:"id" bson:"_id"`
-	CategoryName   string        `json:"categoryName" bson:"categoryName"`
-	CategoryEnName string        `json:"categoryEnName" bson:"enName"`
+	Id             primitive.ObjectID `json:"id" bson:"_id"`
+	CategoryName   string             `json:"categoryName" bson:"categoryName"`
+	CategoryEnName string             `json:"categoryEnName" bson:"enName"`
 }
 
 type RssFeed struct {
-	Id        bson.ObjectId `json:"id" bson:"_id"`
-	Url       string        `json:"url" bson:"url"`
-	SiteUrl   string        `json:"siteUrl" bson:"siteUrl"`
-	FeedTitle string        `json:"feedTitle" bson:"feedTitle"`
+	Id        primitive.ObjectID `json:"id" bson:"_id"`
+	Url       string             `json:"url" bson:"url"`
+	SiteUrl   string             `json:"siteUrl" bson:"siteUrl"`
+	FeedTitle string             `json:"feedTitle" bson:"feedTitle"`
 }
 
 type News struct {

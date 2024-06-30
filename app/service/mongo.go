@@ -1,44 +1,44 @@
 package service
 
 import (
+	"context"
 	"log"
-	"os"
 	"time"
 
-	mgo "github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 	"github.com/jelinden/newsfeedreader/app/domain"
 	"github.com/jelinden/newsfeedreader/app/util"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type M map[string]interface{}
 type S []M
+
 type Mongo struct {
-	mongo *mgo.Session
+	Client *mongo.Client
 }
 
 var mongoConn Mongo
 
-func NewMongo() *Mongo {
-	m := &Mongo{}
-	m.mongo = m.createSession(os.Getenv("MONGO_URL"))
-	mongoConn = *m
-	return m
+func NewMongo(mongoAddress string) *Mongo {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoAddress))
+	if err != nil {
+		log.Println("connection lost ", err)
+	}
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		log.Println("mongo connection failed ", err)
+	}
+	mongoConn = Mongo{Client: client}
+	return &mongoConn
 }
 
 func (m *Mongo) Close() {
-	m.mongo.Close()
-}
-
-func (m *Mongo) createSession(url string) *mgo.Session {
-	maxWait := time.Duration(5 * time.Second)
-	session, err := mgo.DialWithTimeout(url, maxWait)
-	if err != nil {
-		log.Println("mongo connection lost")
-	}
-	session.SetSocketTimeout(30 * time.Second)
-	session.SetMode(mgo.Monotonic, true)
-	return session
+	m.Client.Disconnect(context.Background())
 }
 
 func (m *Mongo) FetchRssItems(lang string, from int, count int) []domain.RSS {
@@ -81,16 +81,22 @@ func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
 	result := []domain.RSS{}
 	dateTo := time.Now()
 	dateFrom := dateTo.AddDate(0, 0, -7)
-	sess := m.mongo.Clone()
-	defer sess.Close()
-	c := sess.DB("news").C("newscollection")
+	c := mongoConn.Client.Database("news").Collection("newscollection")
 	query := M{
 		"language": lang,
 		"pubDate":  M{"$gt": dateFrom, "$lt": dateTo},
 	}
-	err := c.Find(query).Select(M{"rssDesc": 0}).Sort("-clicks", "-pubDate").Skip(from * count).Limit(count).All(&result)
-	if err != nil {
-		log.Println("Mongo error " + err.Error())
+	limit := int64(count)
+	skip := int64(from * count)
+	findOptions := options.FindOptions{
+		Limit: &limit,
+		Sort:  bson.D{{Key: "clicks", Value: -1}, {Key: "pubDate", Value: -1}},
+		Skip:  &skip,
+	}
+
+	cursor, _ := c.Find(context.Background(), query, &findOptions)
+	if err := cursor.All(context.Background(), &result); err != nil {
+		log.Println(err)
 	}
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
@@ -105,13 +111,25 @@ func (m *Mongo) Search(searchString string, lang string, from int, count int) []
 	}
 
 	result := []domain.RSS{}
-	sess := m.mongo.Clone()
-	defer sess.Close()
-	c := sess.DB("news").C("newscollection")
-	err := c.Find(query).Select(M{"rssDesc": 0}).Select(bson.M{"score": bson.M{"$meta": "textScore"}}).Sort("-pubDate", "$textScore:score").Skip(from * count).Limit(count).All(&result)
-	if err != nil {
-		log.Println("Mongo error " + err.Error())
+	c := mongoConn.Client.Database("news").Collection("newscollection")
+
+	limit := int64(count)
+	skip := int64(from * count)
+	findOptions := options.FindOptions{
+		Limit: &limit,
+		Sort:  bson.D{{Key: "pubDate", Value: -1}},
+		Skip:  &skip,
 	}
+
+	cursor, err := c.Find(context.Background(), query, &findOptions)
+	if err != nil {
+		log.Println("search failed", err)
+		return result
+	}
+	if err := cursor.All(context.Background(), &result); err != nil {
+		log.Println(err)
+	}
+
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
 	}
@@ -120,21 +138,31 @@ func (m *Mongo) Search(searchString string, lang string, from int, count int) []
 
 func (m *Mongo) query(query map[string]interface{}, from int, count int) []domain.RSS {
 	result := []domain.RSS{}
-	sess := m.mongo.Clone()
-	defer sess.Close()
-	c := sess.DB("news").C("newscollection")
-	err := c.Find(query).Select(M{"rssDesc": 0}).Sort("-pubDate").Skip(from * count).Limit(count).All(&result)
-	if err != nil {
-		log.Println("Mongo error " + err.Error())
+	c := mongoConn.Client.Database("news").Collection("newscollection")
+
+	limit := int64(count)
+	skip := int64(from * count)
+	findOptions := options.FindOptions{
+		Limit: &limit,
+		Sort:  bson.D{{Key: "pubDate", Value: -1}},
+		Skip:  &skip,
 	}
+
+	cursor, _ := c.Find(context.Background(), query, &findOptions)
+	if err := cursor.All(context.Background(), &result); err != nil {
+		log.Println(err)
+	}
+
 	return result
 }
 
 func (m *Mongo) SaveClick(id string) {
-	s := m.mongo.Clone()
-	defer s.Close()
-	c := s.DB("news").C("newscollection")
-	_, err := c.UpsertId(bson.ObjectIdHex(id), M{"$inc": M{"clicks": 1}})
+	c := mongoConn.Client.Database("news").Collection("newscollection")
+	itemId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Println("saving clieck upsert error", id, err.Error())
+	}
+	_, err = c.UpdateOne(context.Background(), bson.D{{Key: "_id", Value: itemId}}, M{"$inc": M{"clicks": 1}})
 	if err != nil {
 		log.Println("upsert error", id, err.Error())
 	}
@@ -146,12 +174,16 @@ func News(searchString string) []domain.RSS {
 		"$text":    M{"$search": `"` + searchString + `"`, "$language": "en"},
 		"language": "en",
 	}
-	sess := mongoConn.mongo.Clone()
-	defer sess.Close()
-	c := sess.DB("news").C("newscollection")
-	err := c.Find(query).Select(M{"rssDesc": 0}).Select(bson.M{"score": bson.M{"$meta": "textScore"}}).Sort("-pubDate", "$textScore:score").Limit(20).All(&result)
-	if err != nil {
-		log.Println("Mongo error " + err.Error())
+	limit := int64(20)
+	findOptions := options.FindOptions{
+		Limit: &limit,
+		Sort:  "-pubDate",
 	}
+	c := mongoConn.Client.Database("news").Collection("newscollection")
+	cursor, _ := c.Find(context.Background(), query, &findOptions)
+	if err := cursor.All(context.Background(), &result); err != nil {
+		log.Println(err)
+	}
+
 	return result
 }
