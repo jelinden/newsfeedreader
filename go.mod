@@ -2,7 +2,7 @@ module github.com/jelinden/newsfeedreader
 
 go 1.21
 
-toolchain go1.21.1
+toolchain go1.23.1
 
 require (
 	github.com/googollee/go-socket.io v1.7.0
