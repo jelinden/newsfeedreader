@@ -98,6 +98,7 @@ func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
 	if err := cursor.All(context.Background(), &result); err != nil {
 		log.Println(err)
 	}
+	defer cursor.Close(context.Background())
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
 	}
@@ -126,6 +127,7 @@ func (m *Mongo) Search(searchString string, lang string, from int, count int) []
 		log.Println("search failed", err)
 		return result
 	}
+	defer cursor.Close(context.Background())
 	if err := cursor.All(context.Background(), &result); err != nil {
 		log.Println(err)
 	}
@@ -152,7 +154,7 @@ func (m *Mongo) query(query map[string]interface{}, from int, count int) []domai
 	if err := cursor.All(context.Background(), &result); err != nil {
 		log.Println(err)
 	}
-
+	defer cursor.Close(context.Background())
 	return result
 }
 
@@ -184,6 +186,6 @@ func News(searchString string) []domain.RSS {
 	if err := cursor.All(context.Background(), &result); err != nil {
 		log.Println(err)
 	}
-
+	defer cursor.Close(context.Background())
 	return result
 }
