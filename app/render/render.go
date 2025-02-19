@@ -19,10 +19,9 @@ import (
 
 type (
 	Render struct {
-		Mongo          *service.Mongo
-		t              *Template
-		static         *asset.Static
-		newsFi, newsEn string
+		Mongo  *service.Mongo
+		t      *Template
+		static *asset.Static
 	}
 	Template struct {
 		templates *template.Template
@@ -65,10 +64,14 @@ func addToCache(key string, fn func(key string, params ...string) []byte, params
 func (r *Render) Index(name string, lang string, page int, c echo.Context, statusCode int) error {
 	key := name + "_" + lang + "_" + strconv.Itoa(page)
 	if b := cache.GetItem(key); b != nil {
-		return r.render(http.StatusOK, name, b, c)
+		return r.render(http.StatusOK, b, c)
 	}
-	addToCache(key, r.RenderIndex, name, lang, strconv.Itoa(page))
-	return r.render(http.StatusOK, name, cache.GetItem(key), c)
+	if page < 5 {
+		addToCache(key, r.RenderIndex, name, lang, strconv.Itoa(page))
+	} else {
+		return r.render(http.StatusOK, r.RenderIndex(key, name, lang, strconv.Itoa(page)), c)
+	}
+	return r.render(http.StatusOK, cache.GetItem(key), c)
 }
 
 func (r *Render) RenderIndex(key string, params ...string) []byte {
@@ -96,7 +99,7 @@ func (r *Render) getIndexTemplate(name string, lang string, page int) bytes.Buff
 
 func (r *Render) Login(name string, lang string, c echo.Context, statusCode int) error {
 	buf := r.RenderLogin(name, lang)
-	return r.render(http.StatusOK, name, buf.Bytes(), c)
+	return r.render(http.StatusOK, buf.Bytes(), c)
 }
 
 func (r *Render) RenderLogin(name string, lang string) bytes.Buffer {
@@ -132,16 +135,20 @@ func (r *Render) RenderSearch(name string, lang string, searchString string, pag
 		log.Println("rendering page", name, "failed.", err.Error())
 		return err
 	}
-	return r.render(http.StatusOK, name, buf.Bytes(), c)
+	return r.render(http.StatusOK, buf.Bytes(), c)
 }
 
 func (r *Render) ByCategory(name string, lang string, category string, page int, c echo.Context, statusCode int) error {
 	key := name + "_" + lang + "_" + category + "_" + strconv.Itoa(page)
 	if b := cache.GetItem(key); b != nil {
-		return r.render(http.StatusOK, name, b, c)
+		return r.render(http.StatusOK, b, c)
 	}
-	addToCache(key, r.RenderByCategory, name, lang, category, strconv.Itoa(page))
-	return r.render(http.StatusOK, name, cache.GetItem(key), c)
+	if page < 5 {
+		addToCache(key, r.RenderByCategory, name, lang, category, strconv.Itoa(page))
+	} else {
+		return r.render(http.StatusOK, r.RenderByCategory(key, name, lang, category, strconv.Itoa(page)), c)
+	}
+	return r.render(http.StatusOK, cache.GetItem(key), c)
 
 }
 
@@ -176,10 +183,14 @@ func (r *Render) getCategoryTemplate(name string, lang string, category string, 
 func (r *Render) BySource(name string, lang string, source string, page int, c echo.Context, statusCode int) error {
 	key := name + "_" + lang + "_" + source + "_" + strconv.Itoa(page)
 	if b := cache.GetItem(key); b != nil {
-		return r.render(http.StatusOK, name, b, c)
+		return r.render(http.StatusOK, b, c)
 	}
-	addToCache(key, r.RenderBySource, name, lang, source, strconv.Itoa(page))
-	return r.render(http.StatusOK, name, cache.GetItem(key), c)
+	if page < 5 {
+		addToCache(key, r.RenderBySource, name, lang, source, strconv.Itoa(page))
+	} else {
+		return r.render(http.StatusOK, r.RenderBySource(key, name, lang, source, strconv.Itoa(page)), c)
+	}
+	return r.render(http.StatusOK, cache.GetItem(key), c)
 
 }
 
@@ -206,7 +217,7 @@ func (r *Render) getSourceTemplate(name string, lang string, source string, page
 	return &buf
 }
 
-func (r *Render) render(code int, name string, data []byte, c echo.Context) (err error) {
+func (r *Render) render(code int, data []byte, c echo.Context) (err error) {
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTMLCharsetUTF8)
 	c.Response().WriteHeader(code)
 	c.Response().Write(data)
