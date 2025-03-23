@@ -7,9 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
-	cache "github.com/jelinden/hackdaycache"
 	"github.com/jelinden/newsfeedreader/app/domain"
 	"github.com/jelinden/newsfeedreader/app/service"
 	"github.com/jelinden/newsfeedreader/app/util"
@@ -47,34 +45,11 @@ func NewRender(mongo *service.Mongo) *Render {
 	return render
 }
 
-func addToCache(key string, fn func(key string, params ...string) []byte, params ...string) {
-	item := cache.CacheItem{
-		Key:          key,
-		Value:        fn(key, params...),
-		Expire:       time.Now().Add(30 * time.Second),
-		UpdateLength: time.Duration(30 * time.Second),
-		GetFunc:      fn,
-		FuncParams:   params,
-	}
-	if b := cache.GetItem(key); b == nil {
-		cache.AddItem(item)
-	}
-}
-
 func (r *Render) Index(name string, lang string, page int, c echo.Context, statusCode int) error {
-	key := name + "_" + lang + "_" + strconv.Itoa(page)
-	if b := cache.GetItem(key); b != nil {
-		return r.render(http.StatusOK, b, c)
-	}
-	if page < 5 {
-		addToCache(key, r.RenderIndex, name, lang, strconv.Itoa(page))
-	} else {
-		return r.render(http.StatusOK, r.RenderIndex(key, name, lang, strconv.Itoa(page)), c)
-	}
-	return r.render(http.StatusOK, cache.GetItem(key), c)
+	return r.render(http.StatusOK, r.RenderIndex(name, lang, strconv.Itoa(page)), c)
 }
 
-func (r *Render) RenderIndex(key string, params ...string) []byte {
+func (r *Render) RenderIndex(params ...string) []byte {
 	p, _ := strconv.Atoi(params[2])
 	buf := r.getIndexTemplate(params[0], params[1], p)
 	return buf.Bytes()
@@ -139,20 +114,10 @@ func (r *Render) RenderSearch(name string, lang string, searchString string, pag
 }
 
 func (r *Render) ByCategory(name string, lang string, category string, page int, c echo.Context, statusCode int) error {
-	key := name + "_" + lang + "_" + category + "_" + strconv.Itoa(page)
-	if b := cache.GetItem(key); b != nil {
-		return r.render(http.StatusOK, b, c)
-	}
-	if page < 5 {
-		addToCache(key, r.RenderByCategory, name, lang, category, strconv.Itoa(page))
-	} else {
-		return r.render(http.StatusOK, r.RenderByCategory(key, name, lang, category, strconv.Itoa(page)), c)
-	}
-	return r.render(http.StatusOK, cache.GetItem(key), c)
-
+	return r.render(http.StatusOK, r.RenderByCategory(name, lang, category, strconv.Itoa(page)), c)
 }
 
-func (r *Render) RenderByCategory(key string, params ...string) []byte {
+func (r *Render) RenderByCategory(params ...string) []byte {
 	p, _ := strconv.Atoi(params[3])
 	return r.getCategoryTemplate(params[0], params[1], params[2], p).Bytes()
 }
@@ -181,20 +146,11 @@ func (r *Render) getCategoryTemplate(name string, lang string, category string, 
 }
 
 func (r *Render) BySource(name string, lang string, source string, page int, c echo.Context, statusCode int) error {
-	key := name + "_" + lang + "_" + source + "_" + strconv.Itoa(page)
-	if b := cache.GetItem(key); b != nil {
-		return r.render(http.StatusOK, b, c)
-	}
-	if page < 5 {
-		addToCache(key, r.RenderBySource, name, lang, source, strconv.Itoa(page))
-	} else {
-		return r.render(http.StatusOK, r.RenderBySource(key, name, lang, source, strconv.Itoa(page)), c)
-	}
-	return r.render(http.StatusOK, cache.GetItem(key), c)
+	return r.render(http.StatusOK, r.RenderBySource(name, lang, source, strconv.Itoa(page)), c)
 
 }
 
-func (r *Render) RenderBySource(key string, params ...string) []byte {
+func (r *Render) RenderBySource(params ...string) []byte {
 	p, _ := strconv.Atoi(params[3])
 	return r.getSourceTemplate(params[0], params[1], params[2], p).Bytes()
 }
