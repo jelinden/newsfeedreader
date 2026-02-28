@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/jelinden/newsfeedreader/app/domain"
@@ -17,7 +18,13 @@ type M map[string]interface{}
 type S []M
 
 type Mongo struct {
-	Client *mongo.Client
+	Client                *mongo.Client
+	mostReadCache         map[string][]domain.RSS
+	mostReadCacheMutex    sync.RWMutex
+	mostReadCacheExpiry   map[string]time.Time
+	mostReadCacheTTL      time.Duration
+	indexesCreated        bool
+	indexesMutex          sync.Mutex
 }
 
 var mongoConn Mongo
@@ -33,12 +40,51 @@ func NewMongo(mongoAddress string) *Mongo {
 	if err != nil {
 		log.Println("mongo connection failed ", err)
 	}
-	mongoConn = Mongo{Client: client}
+	mongoConn = Mongo{
+		Client:              client,
+		mostReadCache:       make(map[string][]domain.RSS),
+		mostReadCacheExpiry: make(map[string]time.Time),
+		mostReadCacheTTL:    1 * time.Hour,
+		indexesCreated:      false,
+	}
+	go mongoConn.createIndexes()
 	return &mongoConn
 }
 
 func (m *Mongo) Close() {
 	m.Client.Disconnect(context.Background())
+}
+
+func (m *Mongo) createIndexes() {
+	m.indexesMutex.Lock()
+	defer m.indexesMutex.Unlock()
+	if m.indexesCreated {
+		return
+	}
+	c := m.Client.Database("news").Collection("newscollection")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	
+	indexModel1 := mongo.IndexModel{
+		Keys: bson.D{{Key: "language", Value: 1}, {Key: "pubDate", Value: -1}},
+	}
+	indexModel2 := mongo.IndexModel{
+		Keys: bson.D{{Key: "language", Value: 1}, {Key: "category.categoryName", Value: 1}},
+	}
+	indexModel3 := mongo.IndexModel{
+		Keys: bson.D{{Key: "language", Value: 1}, {Key: "rssSource", Value: 1}},
+	}
+	indexModel4 := mongo.IndexModel{
+		Keys: bson.D{{Key: "language", Value: 1}, {Key: "pubDate", Value: -1}, {Key: "clicks", Value: -1}},
+	}
+	
+	_, err := c.Indexes().CreateMany(ctx, []mongo.IndexModel{indexModel1, indexModel2, indexModel3, indexModel4})
+	if err != nil {
+		log.Println("failed to create indexes:", err)
+	} else {
+		m.indexesCreated = true
+		log.Println("indexes created successfully")
+	}
 }
 
 func (m *Mongo) FetchRssItems(lang string, from int, count int) []domain.RSS {
@@ -78,6 +124,17 @@ func (m *Mongo) FetchRssItemsBySource(lang string, source string, from int, coun
 }
 
 func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
+	cacheKey := lang
+	
+	m.mostReadCacheMutex.RLock()
+	if cachedResult, exists := m.mostReadCache[cacheKey]; exists {
+		if time.Now().Before(m.mostReadCacheExpiry[cacheKey]) {
+			m.mostReadCacheMutex.RUnlock()
+			return cachedResult
+		}
+	}
+	m.mostReadCacheMutex.RUnlock()
+	
 	result := []domain.RSS{}
 	dateTo := time.Now()
 	dateFrom := dateTo.AddDate(0, 0, -7)
@@ -94,14 +151,24 @@ func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
 		Skip:  &skip,
 	}
 
-	cursor, _ := c.Find(context.Background(), query, &findOptions)
-	if err := cursor.All(context.Background(), &result); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	cursor, _ := c.Find(ctx, query, &findOptions)
+	if err := cursor.All(ctx, &result); err != nil {
 		log.Println(err)
 	}
-	defer cursor.Close(context.Background())
+	defer cursor.Close(ctx)
+	
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
 	}
+	
+	m.mostReadCacheMutex.Lock()
+	m.mostReadCache[cacheKey] = result
+	m.mostReadCacheExpiry[cacheKey] = time.Now().Add(m.mostReadCacheTTL)
+	m.mostReadCacheMutex.Unlock()
+	
 	return result
 }
 
@@ -122,13 +189,16 @@ func (m *Mongo) Search(searchString string, lang string, from int, count int) []
 		Skip:  &skip,
 	}
 
-	cursor, err := c.Find(context.Background(), query, &findOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	cursor, err := c.Find(ctx, query, &findOptions)
 	if err != nil {
 		log.Println("search failed", err)
 		return result
 	}
-	defer cursor.Close(context.Background())
-	if err := cursor.All(context.Background(), &result); err != nil {
+	defer cursor.Close(ctx)
+	if err := cursor.All(ctx, &result); err != nil {
 		log.Println(err)
 	}
 
@@ -150,11 +220,14 @@ func (m *Mongo) query(query map[string]interface{}, from int, count int) []domai
 		Skip:  &skip,
 	}
 
-	cursor, _ := c.Find(context.Background(), query, &findOptions)
-	if err := cursor.All(context.Background(), &result); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	cursor, _ := c.Find(ctx, query, &findOptions)
+	if err := cursor.All(ctx, &result); err != nil {
 		log.Println(err)
 	}
-	defer cursor.Close(context.Background())
+	defer cursor.Close(ctx)
 	return result
 }
 
@@ -162,9 +235,12 @@ func (m *Mongo) SaveClick(id string) {
 	c := mongoConn.Client.Database("news").Collection("newscollection")
 	itemId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		log.Println("saving clieck upsert error", id, err.Error())
+		log.Println("saving click error", id, err.Error())
 	}
-	_, err = c.UpdateOne(context.Background(), bson.D{{Key: "_id", Value: itemId}}, M{"$inc": M{"clicks": 1}})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	_, err = c.UpdateOne(ctx, bson.D{{Key: "_id", Value: itemId}}, M{"$inc": M{"clicks": 1}})
 	if err != nil {
 		log.Println("upsert error", id, err.Error())
 	}
@@ -179,13 +255,16 @@ func News(searchString string) []domain.RSS {
 	limit := int64(20)
 	findOptions := options.FindOptions{
 		Limit: &limit,
-		Sort:  "-pubDate",
+		Sort:  bson.D{{Key: "pubDate", Value: -1}},
 	}
 	c := mongoConn.Client.Database("news").Collection("newscollection")
-	cursor, _ := c.Find(context.Background(), query, &findOptions)
-	if err := cursor.All(context.Background(), &result); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	cursor, _ := c.Find(ctx, query, &findOptions)
+	if err := cursor.All(ctx, &result); err != nil {
 		log.Println(err)
 	}
-	defer cursor.Close(context.Background())
+	defer cursor.Close(ctx)
 	return result
 }
