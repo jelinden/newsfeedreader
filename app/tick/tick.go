@@ -21,6 +21,7 @@ func NewTick(mongo *service.Mongo) *Tick {
 }
 
 func (t *Tick) TickNews(lang string) {
+	var lastNews string
 	for range time.Tick(10 * time.Second) {
 		rssList := t.Mongo.FetchRssItems(lang, 0, 5)
 		if len(rssList) > 0 {
@@ -29,10 +30,14 @@ func (t *Tick) TickNews(lang string) {
 			if err != nil {
 				log.Println(err.Error())
 			} else {
-				if lang == "fi" {
-					t.NewsFi = string(news)
-				} else {
-					t.NewsEn = string(news)
+				newsStr := string(news)
+				if newsStr != lastNews {
+					lastNews = newsStr
+					if lang == "fi" {
+						t.NewsFi = newsStr
+					} else {
+						t.NewsEn = newsStr
+					}
 				}
 			}
 		} else {
