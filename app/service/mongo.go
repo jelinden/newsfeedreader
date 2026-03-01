@@ -94,11 +94,18 @@ func (m *Mongo) MostReadWeekly(lang string, from int, count int) []domain.RSS {
 		Skip:  &skip,
 	}
 
-	cursor, _ := c.Find(context.Background(), query, &findOptions)
+	cursor, err := c.Find(context.Background(), query, &findOptions)
+	if err != nil {
+		log.Println(err)
+		if lang == "en" {
+			result = util.AddCategoryEnNames(result)
+		}
+		return result
+	}
+	defer cursor.Close(context.Background())
 	if err := cursor.All(context.Background(), &result); err != nil {
 		log.Println(err)
 	}
-	defer cursor.Close(context.Background())
 	if lang == "en" {
 		result = util.AddCategoryEnNames(result)
 	}
@@ -150,11 +157,15 @@ func (m *Mongo) query(query map[string]interface{}, from int, count int) []domai
 		Skip:  &skip,
 	}
 
-	cursor, _ := c.Find(context.Background(), query, &findOptions)
+	cursor, err := c.Find(context.Background(), query, &findOptions)
+	if err != nil {
+		log.Println(err)
+		return result
+	}
+	defer cursor.Close(context.Background())
 	if err := cursor.All(context.Background(), &result); err != nil {
 		log.Println(err)
 	}
-	defer cursor.Close(context.Background())
 	return result
 }
 
@@ -162,7 +173,7 @@ func (m *Mongo) SaveClick(id string) {
 	c := mongoConn.Client.Database("news").Collection("newscollection")
 	itemId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		log.Println("saving clieck upsert error", id, err.Error())
+		log.Println("saving click upsert error", id, err.Error())
 	}
 	_, err = c.UpdateOne(context.Background(), bson.D{{Key: "_id", Value: itemId}}, M{"$inc": M{"clicks": 1}})
 	if err != nil {
@@ -179,13 +190,17 @@ func News(searchString string) []domain.RSS {
 	limit := int64(20)
 	findOptions := options.FindOptions{
 		Limit: &limit,
-		Sort:  "-pubDate",
+		Sort:  bson.D{{Key: "pubDate", Value: -1}},
 	}
 	c := mongoConn.Client.Database("news").Collection("newscollection")
-	cursor, _ := c.Find(context.Background(), query, &findOptions)
+	cursor, err := c.Find(context.Background(), query, &findOptions)
+	if err != nil {
+		log.Println(err)
+		return result
+	}
+	defer cursor.Close(context.Background())
 	if err := cursor.All(context.Background(), &result); err != nil {
 		log.Println(err)
 	}
-	defer cursor.Close(context.Background())
 	return result
 }
