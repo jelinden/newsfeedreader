@@ -15,7 +15,7 @@ func NewCookieUtil() *CookieUtil {
 }
 
 func (c *CookieUtil) SetCookie(name string, value string, context echo.Context) {
-	expire := time.Now().AddDate(1, 0, 1)
+	expire := time.Now().AddDate(1, 0, 0)
 	nameValuePair := name + "=" + value
 	cookie := http.Cookie{
 		Name:       name,
