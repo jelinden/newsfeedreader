@@ -1,4 +1,9 @@
 #!/bin/bash
-bash minify.sh && 
-go build -mod=vendor && 
-MONGO_URL="mongodb://$MONGO_USER:$MONGO_PASSWORD@192.168.0.1:27017/news" ./newsfeedreader
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
+# shellcheck source=mongo-url.sh
+. ./mongo-url.sh
+
+bash minify.sh
+go build -mod=vendor -o newsfeedreader .
+exec ./newsfeedreader

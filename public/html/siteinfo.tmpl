@@ -1,0 +1,13 @@
+{{ define "siteinfo" }}
+	<footer class="siteFooter">
+		<div class="footerInner">
+			<p class="footerNote">
+				{{ if eq .Lang `fi` }}Uutiset, uutishaku ja mediaseuranta rss-syötteistä.{{ else }}News, search and media monitoring from rss feeds.{{ end }}
+			</p>
+			<nav class="footerNav" aria-label="{{ if eq .Lang `fi` }}Kielet{{ else }}Languages{{ end }}">
+				<a class="footerLink" href="/fi" hreflang="fi" lang="fi">Suomi</a>
+				<a class="footerLink" href="/en" hreflang="en" lang="en">English</a>
+			</nav>
+		</div>
+	</footer>
+{{ end }}

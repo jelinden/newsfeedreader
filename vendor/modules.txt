@@ -1,28 +1,6 @@
-# github.com/gofrs/uuid v4.4.0+incompatible
-## explicit
-github.com/gofrs/uuid
 # github.com/golang/snappy v1.0.0
 ## explicit
 github.com/golang/snappy
-# github.com/gomodule/redigo v1.9.3
-## explicit; go 1.17
-github.com/gomodule/redigo/redis
-# github.com/googollee/go-socket.io v1.7.0
-## explicit; go 1.16
-github.com/googollee/go-socket.io
-github.com/googollee/go-socket.io/engineio
-github.com/googollee/go-socket.io/engineio/frame
-github.com/googollee/go-socket.io/engineio/packet
-github.com/googollee/go-socket.io/engineio/payload
-github.com/googollee/go-socket.io/engineio/session
-github.com/googollee/go-socket.io/engineio/transport
-github.com/googollee/go-socket.io/engineio/transport/polling
-github.com/googollee/go-socket.io/engineio/transport/utils
-github.com/googollee/go-socket.io/engineio/transport/websocket
-github.com/googollee/go-socket.io/parser
-# github.com/gorilla/websocket v1.5.3
-## explicit; go 1.12
-github.com/gorilla/websocket
 # github.com/klauspost/compress v1.20.0
 ## explicit; go 1.25
 github.com/klauspost/compress
@@ -51,14 +29,21 @@ github.com/mattn/go-isatty
 # github.com/montanaflynn/stats v0.12.5
 ## explicit; go 1.13
 github.com/montanaflynn/stats
-# github.com/pquerna/ffjson v0.0.0-20190930134022-aa0246cd15f7
-## explicit
-github.com/pquerna/ffjson/ffjson
-github.com/pquerna/ffjson/fflib/v1
-github.com/pquerna/ffjson/fflib/v1/internal
 # github.com/rsniezynski/go-asset-helper v0.0.0-20150405181857-38e753e5e853
 ## explicit
 github.com/rsniezynski/go-asset-helper
+# github.com/tdewolff/minify/v2 v2.24.25
+## explicit; go 1.26.0
+github.com/tdewolff/minify/v2
+github.com/tdewolff/minify/v2/css
+github.com/tdewolff/minify/v2/js
+# github.com/tdewolff/parse/v2 v2.8.20
+## explicit; go 1.19
+github.com/tdewolff/parse/v2
+github.com/tdewolff/parse/v2/buffer
+github.com/tdewolff/parse/v2/css
+github.com/tdewolff/parse/v2/js
+github.com/tdewolff/parse/v2/strconv
 # github.com/valyala/bytebufferpool v1.0.0
 ## explicit
 github.com/valyala/bytebufferpool
@@ -147,7 +132,7 @@ golang.org/x/net/websocket
 ## explicit; go 1.26.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.48.0
+# golang.org/x/sys v0.49.0
 ## explicit; go 1.26.0
 golang.org/x/sys/unix
 golang.org/x/sys/windows

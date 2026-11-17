@@ -1,147 +1,286 @@
-window.onload = function() {
-    startWS();
-};
+(function () {
+	"use strict";
 
-const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+	var wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+	var THEME_KEY = "uutispuro-theme";
+	var themeToggle = null;
+	var lastId = null;
+	var reconnectTimer = null;
 
-function startWS() {
-    if (location.pathname === "/fi" || location.pathname === "/en") {
-        var lang = location.pathname === "/fi" ? "fi" : "en";
-        var wsURL = wsProtocol + "://" + window.location.hostname + ":" + window.location.port + "/ws/";
-        var socket = new WebSocket(wsURL + lang, wsProtocol);
+	function pad2(n) {
+		return (n < 10 ? "0" : "") + n;
+	}
 
-        socket.onmessage = function(msg) {
-            if (msg.data) {
-                handleMessage(msg.data, lang);
-            }
-        };
+	// Replaces moment().format("DD.MM. HH:mm") without the ~50kb dependency.
+	function formatDate(value) {
+		var d = new Date(value);
+		if (isNaN(d.getTime())) {
+			return "";
+		}
+		return pad2(d.getDate()) + "." + pad2(d.getMonth() + 1) + ". " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+	}
 
-        socket.onopen = function() {
-            console.log("ws socket open");
-            if (window.timerID) {
-                window.clearTimeout(window.timerID);
-                window.timerID = 0;
-            }
-        };
+	function makeNode(item, lang) {
+		var slug = item.category.categoryName.toLowerCase();
+		var categoryName = lang === "en" ? item.category.categoryEnName : item.category.categoryName;
 
-        socket.onclose = function() {
-            socket = null;
-            console.log("ws socket closed", !window.timerID);
-            if (!window.timerID) {
-                window.timerID = setTimeout(function() {
-                    startWS();
-                }, 8000);
-            }
-        };
+		var el = document.createElement("div");
+		el.className = "item new";
 
-        socket.onerror = function() {
-            console.log("ws socket error");
-            if (window.timerID) {
-                window.clearTimeout(window.timerID);
-                window.timerID = 0;
-            }
-        };
-    }
-}
+		var date = document.createElement("div");
+		date.className = "date";
+		date.textContent = formatDate(item.pubDate);
 
-function handleMessage(data, lang) {
-    var lastId = -999;
-    const json = JSON.parse(data);
-    if (json && json.news) {
-        if (json.news.length > 0 && lastId !== json.news[0].id) {
-            for (var i = 4; i >= 0; i--) {
-                if (document.getElementById(json.news[i].id) === null) {
-                    var item = makeNode(json, i, lang);
-                    prepend(item);
-                }
-            }
-            lastId = json.news[0].id;
-        }
-    }
-}
+		var source = document.createElement("div");
+		source.className = "source";
+		source.textContent = item.rssSource;
 
-var prepend = function(firstElement) {
-    var parent = document.getElementById("news-container");
-    parent.insertBefore(firstElement, parent.firstChild);
-    parent.removeChild(parent.lastChild);
-};
+		var category = document.createElement("div");
+		category.className = "category";
+		var categoryLink = document.createElement("a");
+		categoryLink.href = "/" + lang + "/category/" + slug + "/0";
+		categoryLink.textContent = categoryName;
+		category.appendChild(categoryLink);
 
-var makeNode = function(json, i, lang) {
-    var linkCatName = json.news[i].category.categoryName.toLowerCase();
-    var catName = lang === "en" ? json.news[i].category.categoryEnName : json.news[i].category.categoryName;
+		var link = document.createElement("div");
+		link.className = "link";
+		var a = document.createElement("a");
+		a.className = "itemClick";
+		a.id = item.id;
+		a.href = item.rssLink;
+		a.target = "_blank";
+		a.rel = "noopener noreferrer";
+		a.textContent = item.rssTitle;
+		link.appendChild(a);
 
-    var item = document.createElement("div");
-    item.setAttribute("class", "item new");
-    var source = document.createElement("div");
-    source.setAttribute("class", "source");
-    source.innerHTML = json.news[i].rssSource;
-    var date = document.createElement("div");
-    date.setAttribute("class", "date");
-    date.innerHTML = moment(json.news[i].pubDate).format("DD.MM. HH:mm");
-    var link = document.createElement("div");
-    link.setAttribute("class", "link");
-    var category = document.createElement("div");
-    var categoryLink = document.createElement("a");
-    categoryLink.setAttribute("href", "/" + lang + "/category/" + linkCatName + "/0");
-    category.setAttribute("class", "category");
-    categoryLink.innerHTML = catName;
-    category.appendChild(categoryLink);
-    var a = document.createElement("a");
-    a.setAttribute("id", json.news[i].id);
-    a.setAttribute("href", json.news[i].rssLink);
-    a.setAttribute("target", "_blank");
-    a.innerHTML = json.news[i].rssTitle;
-    link.appendChild(a);
-    item.appendChild(date);
-    item.appendChild(source);
-    item.appendChild(category);
-    item.appendChild(link);
-    return item;
-};
+		el.appendChild(date);
+		el.appendChild(source);
+		el.appendChild(category);
+		el.appendChild(link);
+		return el;
+	}
 
-var xmlhttp = new XMLHttpRequest();
+	// Keep the last page full: drop the oldest item for every new one.
+	function prepend(el) {
+		var container = document.getElementById("news-container");
+		if (!container) {
+			return;
+		}
+		container.insertBefore(el, container.firstChild);
+		if (container.children.length > 1) {
+			container.removeChild(container.lastElementChild);
+		}
+	}
 
-function saveClick(id) {
-    xmlhttp.open("GET", "/api/click/" + id, true);
-    xmlhttp.send();
-}
+	function handleMessage(data, lang) {
+		var json;
+		try {
+			json = JSON.parse(data);
+		} catch (e) {
+			console.log("ws: ignoring malformed payload", e);
+			return;
+		}
+		var news = json && json.news;
+		if (!news || news.length === 0 || news[0].id === lastId) {
+			return;
+		}
+		for (var i = Math.min(news.length - 1, 4); i >= 0; i--) {
+			if (document.getElementById(news[i].id) === null) {
+				prepend(makeNode(news[i], lang));
+			}
+		}
+		lastId = news[0].id;
+	}
 
-document.addEventListener("DOMContentLoaded", function() {
-    var item = document.getElementsByClassName("itemClick");
-    for (var i = 0; i < item.length; i++) {
-        item[i].addEventListener("click", function() {
-            saveClick(this.id);
-        });
-    }
-});
+	// The live feed only runs on the front pages.
+	function startWS(lang) {
+		var url = wsProtocol + "://" + window.location.hostname + ":" + window.location.port + "/ws/" + lang;
+		var socket = new WebSocket(url, wsProtocol);
 
-(function(window, document) {
-    var layout = document.getElementById("layout"),
-        menu = document.getElementById("menu"),
-        menuLink = document.getElementById("menuLink");
+		socket.onmessage = function (msg) {
+			if (msg.data) {
+				handleMessage(msg.data, lang);
+			}
+		};
+		socket.onopen = function () {
+			console.log("ws socket open");
+			if (reconnectTimer) {
+				clearTimeout(reconnectTimer);
+				reconnectTimer = null;
+			}
+		};
+		socket.onclose = function () {
+			console.log("ws socket closed");
+			if (!reconnectTimer) {
+				reconnectTimer = setTimeout(function () {
+					reconnectTimer = null;
+					if (document.visibilityState !== "hidden") {
+						startWS(lang);
+					}
+				}, 15000);
+			}
+		};
+		socket.onerror = function () {
+			console.log("ws socket error");
+			socket.close();
+		};
+	}
 
-    function toggleClass(element, className) {
-        var classes = element.className.split(/\s+/),
-            length = classes.length;
+	// Click beacons. navigator.sendBeacon survives the tab being closed before
+	// the request finishes, which a plain XHR did not.
+	function saveClick(id) {
+		var url = "/api/click/" + encodeURIComponent(id);
+		if (!navigator.sendBeacon || !navigator.sendBeacon(url)) {
+			var img = new Image();
+			img.src = url;
+		}
+	}
 
-        for (var i = 0; i < length; i++) {
-            if (classes[i] === className) {
-                classes.splice(i, 1);
-                break;
-            }
-        }
-        if (length === classes.length) {
-            classes.push(className);
-        }
+	function trackClicks() {
+		var items = document.getElementsByClassName("itemClick");
+		for (var i = 0; i < items.length; i++) {
+			items[i].addEventListener("click", function () {
+				saveClick(this.id);
+			});
+		}
+	}
 
-        element.className = classes.join(" ");
-    }
+	// Off canvas navigation on narrow screens.
+	function startMenu() {
+		var layout = document.getElementById("layout");
+		var menu = document.getElementById("menu");
+		var toggle = document.getElementById("menuLink");
+		var scrim = document.querySelector(".sideScrim");
+		if (!layout || !menu || !toggle) {
+			return;
+		}
+		function close() {
+			layout.classList.remove("active");
+		}
+		toggle.addEventListener("click", function (e) {
+			e.preventDefault();
+			layout.classList.toggle("active");
+		});
+		var closeButton = menu.querySelector(".menuClose");
+		if (closeButton) {
+			closeButton.addEventListener("click", function (e) {
+				e.preventDefault();
+				close();
+			});
+		}
+		if (scrim) {
+			scrim.addEventListener("click", function (e) {
+				e.preventDefault();
+				close();
+			});
+		}
+		document.addEventListener("keydown", function (e) {
+			if (e.key === "Escape") {
+				close();
+			}
+		});
+	}
 
-    menuLink.onclick = function(e) {
-        var active = "active";
-        e.preventDefault();
-        toggleClass(layout, active);
-        toggleClass(menu, active);
-        toggleClass(menuLink, active);
-    };
-})(this, this.document);
+	// Light or dark, remembered per browser. The theme_script partial in the
+	// document head applies the stored value before the stylesheet paints.
+	// persist=false while simply mirroring the operating system, otherwise the
+	// first visit would store a choice and stop following further OS changes.
+	function applyTheme(theme, persist) {
+		document.documentElement.setAttribute("data-theme", theme);
+		if (persist) {
+			try {
+				localStorage.setItem(THEME_KEY, theme);
+			} catch (e) {}
+		}
+		var meta = document.querySelector('meta[name="theme-color"]');
+		if (meta) {
+			meta.setAttribute("content", theme === "dark" ? "#0f1214" : "#f4f5f7");
+		}
+		if (themeToggle) {
+			themeToggle.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+		}
+	}
+
+	function startThemeToggle() {
+		themeToggle = document.getElementById("themeToggle");
+		if (!themeToggle) {
+			return;
+		}
+		applyTheme(document.documentElement.getAttribute("data-theme") || "light", false);
+		themeToggle.addEventListener("click", function () {
+			applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark", true);
+		});
+		if (!window.matchMedia) {
+			return;
+		}
+		// Keep following the operating system until an explicit choice is stored.
+		var query = window.matchMedia("(prefers-color-scheme: dark)");
+		var onChange = function (event) {
+			var stored = null;
+			try {
+				stored = localStorage.getItem(THEME_KEY);
+			} catch (e) {}
+			if (!stored) {
+				applyTheme(event.matches ? "dark" : "light", false);
+			}
+		};
+		if (query.addEventListener) {
+			query.addEventListener("change", onChange);
+		} else if (query.addListener) {
+			query.addListener(onChange);
+		}
+	}
+
+	// Marks the single menu entry that matches the current url closest, so the
+	// sidebar shows where you are instead of lighting up every prefix.
+	function markCurrentSection() {
+		var normalize = function (path) {
+			return path.replace(/\/\d+\/?$/, "").replace(/\/+$/, "");
+		};
+		var current = normalize(location.pathname);
+		var links = document.querySelectorAll("#menu a");
+		var best = null;
+		var bestLength = -1;
+		for (var i = 0; i < links.length; i++) {
+			var href = normalize(links[i].getAttribute("href") || "");
+			if (href === "") {
+				continue;
+			}
+			if ((current === href || current.indexOf(href + "/") === 0) && href.length > bestLength) {
+				best = links[i];
+				bestLength = href.length;
+			}
+		}
+		if (best) {
+			best.parentNode.classList.add("isCurrent");
+		}
+	}
+
+	function startShortcuts() {
+		document.addEventListener("keydown", function (e) {
+			var tag = document.activeElement && document.activeElement.tagName;
+			if (e.key === "/" && tag !== "INPUT" && tag !== "TEXTAREA") {
+				var field = document.getElementById("q");
+				if (field) {
+					e.preventDefault();
+					field.focus();
+				}
+			}
+		});
+	}
+
+	window.addEventListener("load", function () {
+		var lang = location.pathname === "/fi" || location.pathname === "/en" ? location.pathname.slice(1) : null;
+		if (lang) {
+			startWS(lang);
+		}
+	});
+
+	document.addEventListener("DOMContentLoaded", function () {
+		trackClicks();
+		startThemeToggle();
+		startMenu();
+		markCurrentSection();
+		startShortcuts();
+	});
+})();

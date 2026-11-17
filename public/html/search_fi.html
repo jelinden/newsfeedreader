@@ -1,8 +1,10 @@
-{{define "search_fi"}}<html>
+{{define "search_fi"}}<!DOCTYPE html>
+<html lang="fi">
 
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, user-scalable=no" />
+		{{ template "theme_script" }}
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		{{ linktag "public/css/uutispuro.css" "rel" "preload" "as" "style" "type" "text/css"}}
 		{{ linktag "public/css/uutispuro.css" "rel" "stylesheet"}}
 		<meta name="description" content="Uutishaku ja mediaseuranta rss syötteistä, {{ .SearchQuery }}" />
@@ -18,9 +20,10 @@
 	</head>
 
 	<body>
+		{{ template "skip_link" . }}
 		<div id="layout">
+			{{ template "header" . }}
 			{{ template "menu_fi" }}
-			{{ template "top_bar" . }}
 			<h1 class="searchTitle">
 				Vastaus haulle "{{ .SearchQuery }}"
 			</h1>
@@ -44,6 +47,9 @@
 								</div>
 							</div>
 							{{end}}
+							{{ if eq .ResultCount 0 }}
+							<p class="empty">{{ if eq .Lang `fi` }}Uutisia ei löytynyt.{{ else }}No news found.{{ end }}</p>
+							{{ end }}
 						</div>
 						<div class="paging">
 							{{ if gt .Page 0 }}<span class="prev"><a href="/fi/search/{{ minus .Page 1 }}?q={{ .SearchQuery }}">Edelliset</a></span>{{ end }}
@@ -59,6 +65,7 @@
 					</div>
 				</div>
 			</div>
+		{{ template "siteinfo" . }}
 		</div>
 		{{ template "scripts" . }}
 	</body>

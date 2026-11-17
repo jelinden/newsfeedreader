@@ -1,15 +1,12 @@
-FROM vimagick/alpine-arm:latest
-RUN apk update && apk add tzdata
-RUN cp /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
-RUN echo "Europe/Helsinki" > /etc/timezone
-RUN apk del tzdata
+FROM alpine:3.20
+RUN apk add --no-cache ca-certificates tzdata && \
+    cp /usr/share/zoneinfo/Europe/Helsinki /etc/localtime && \
+    echo "Europe/Helsinki" > /etc/timezone
 RUN mkdir -p /app
 WORKDIR /app
-RUN cd /app
 COPY newsfeedreader /app/newsfeedreader
 COPY public /app/public
 COPY manifest.json /app/manifest.json
 EXPOSE 1300
-ENV MONGO_URL 192.168.0.5:27017
-ENTRYPOINT ["./newsfeedreader", "-env", "prod"]
-# use http://localhost:1300/fi
+ENV MONGO_URL mongodb://127.0.0.1:27017/news
+ENTRYPOINT ["/app/newsfeedreader"]

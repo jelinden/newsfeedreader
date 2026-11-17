@@ -13,17 +13,72 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func Root(c echo.Context) error {
-	lang := c.Request().Header.Get("Accept-Language")
-	if strings.Contains(lang, "en") {
-		return c.Redirect(http.StatusFound, "/en")
-	}
-	return c.Redirect(http.StatusFound, "/fi")
+const maxPages = 999
+
+// searchTermPattern strips anything that is not a letter (incl. Finnish
+// letters), a digit, a space or a hyphen from user-supplied search terms.
+// Compiling it once avoids recompiling on every request.
+var searchTermPattern = regexp.MustCompile(`[^-a-zåäöA-ZÅÄÖ0-9 ]+`)
+
+// ValidateAndCorrectifySearchTerm sanitizes user input used in mongo queries
+// and templates.
+func ValidateAndCorrectifySearchTerm(searchString string) string {
+	return searchTermPattern.ReplaceAllString(searchString, "")
 }
 
-func FiRoot(render *render.Render) echo.HandlerFunc {
+// parsePage returns the page number from a path parameter. An absent
+// parameter means the first page (e.g. /fi is /fi/0); invalid, negative or
+// absurdly large pages resolve to page 0 with http.StatusBadRequest.
+func parsePage(raw string) (int, int) {
+	if raw == "" {
+		return 0, http.StatusOK
+	}
+	if page, err := strconv.Atoi(raw); err == nil && page >= 0 && page < maxPages {
+		return page, http.StatusOK
+	}
+	return 0, http.StatusBadRequest
+}
+
+func Root(c echo.Context) error {
+	lang := "fi"
+	if strings.Contains(c.Request().Header.Get("Accept-Language"), "en") {
+		lang = "en"
+	}
+	return c.Redirect(http.StatusFound, "/"+lang)
+}
+
+// Index serves the front page of a language, e.g. /fi and /fi/0.
+func Index(render *render.Render, lang string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return render.Index("index_fi", "fi", 0, c, http.StatusOK)
+		page, status := parsePage(c.Param("page"))
+		return render.Index("index_"+lang, lang, page, c, status)
+	}
+}
+
+// Search serves search results for a language, e.g. /en/search?q=news.
+func Search(render *render.Render, lang string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		page, status := parsePage(c.Param("page"))
+		query := ValidateAndCorrectifySearchTerm(c.FormValue("q"))
+		return render.RenderSearch("search_"+lang, lang, query, page, c, status)
+	}
+}
+
+// Category serves news of a single category, e.g. /fi/category/urheilu/0.
+func Category(render *render.Render, lang string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		page, status := parsePage(c.Param("page"))
+		category := util.ToUpper(ValidateAndCorrectifySearchTerm(c.Param("category")))
+		return render.ByCategory("category_"+lang, lang, category, page, c, status)
+	}
+}
+
+// Source serves news of a single rss source, e.g. /fi/source/yle/0.
+func Source(render *render.Render, lang string) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		page, status := parsePage(c.Param("page"))
+		source := util.ToUpper(ValidateAndCorrectifySearchTerm(c.Param("source")))
+		return render.BySource("source_"+lang, lang, source, page, c, status)
 	}
 }
 
@@ -33,116 +88,16 @@ func Login(render *render.Render, lang string) echo.HandlerFunc {
 	}
 }
 
-func EnRoot(render *render.Render) echo.HandlerFunc {
+// Click registers a click on a news item.
+func Click(mongo *service.Mongo) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return render.Index("index_en", "en", 0, c, http.StatusOK)
-	}
-}
-
-func FiRootPaged(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		if page, err := strconv.Atoi(c.Param("page")); err == nil {
-			if page < 999 && page >= 0 {
-				return render.Index("index_fi", "fi", page, c, http.StatusOK)
-			}
+		id := c.Param("id")
+		if !service.IsValidID(id) {
+			return c.NoContent(http.StatusBadRequest)
 		}
-		return render.Index("index_fi", "fi", 0, c, http.StatusBadRequest)
-	}
-}
-
-func EnRootPaged(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		if page, err := strconv.Atoi(c.Param("page")); err == nil {
-			if page < 999 && page >= 0 {
-				return render.Index("index_en", "en", page, c, http.StatusOK)
-			}
+		if err := mongo.SaveClick(id); err != nil {
+			return c.NoContent(http.StatusInternalServerError)
 		}
-		return render.Index("index_en", "en", 0, c, http.StatusBadRequest)
-	}
-}
-
-func FiSearch(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.FormValue("q")), 0, c, http.StatusOK)
-	}
-}
-func EnSearch(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.FormValue("q")), 0, c, http.StatusOK)
-	}
-}
-func FiSearchPaged(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		if page, err := strconv.Atoi(c.Param("page")); err == nil {
-			if page < 999 && page >= 0 {
-				return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.FormValue("q")), page, c, http.StatusOK)
-			}
-		}
-		return render.RenderSearch("search_fi", "fi", validateAndCorrectifySearchTerm(c.FormValue("q")), 0, c, http.StatusOK)
-	}
-}
-func EnSearchPaged(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		if page, err := strconv.Atoi(c.Param("page")); err == nil {
-			if page < 999 && page >= 0 {
-				return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.FormValue("q")), page, c, http.StatusOK)
-			}
-		}
-		return render.RenderSearch("search_en", "en", validateAndCorrectifySearchTerm(c.FormValue("q")), 0, c, http.StatusOK)
-	}
-}
-func FiCategory(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		category := util.ToUpper(c.Param("category"))
-		if page, err := strconv.Atoi(c.Param("page")); err == nil {
-			if page < 999 && page >= 0 {
-				return render.ByCategory("category_fi", "fi", validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
-			}
-		}
-		return render.ByCategory("category_fi", "fi", validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
-	}
-}
-func EnCategory(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		category := util.ToUpper(c.Param("category"))
-		if page, err := strconv.Atoi(c.Param("page")); err == nil {
-			if page < 999 && page >= 0 {
-				return render.ByCategory("category_en", "en", validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
-			}
-		}
-		return render.ByCategory("category_en", "en", validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
-	}
-}
-func FiSource(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		category := util.ToUpper(c.Param("source"))
-		if page, err := strconv.Atoi(c.Param("page")); err == nil {
-			if page < 999 && page >= 0 {
-				return render.BySource("source_fi", "fi", validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
-			}
-		}
-		return render.BySource("source_fi", "fi", validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
-	}
-}
-func EnSource(render *render.Render) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		category := util.ToUpper(c.Param("source"))
-		if page, err := strconv.Atoi(c.Param("page")); err == nil {
-			if page < 999 && page >= 0 {
-				return render.BySource("source_en", "en", validateAndCorrectifySearchTerm(category), page, c, http.StatusOK)
-			}
-		}
-		return render.BySource("source_en", "en", validateAndCorrectifySearchTerm(category), 0, c, http.StatusOK)
-	}
-}
-func Click(mgo *service.Mongo) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		mgo.SaveClick(validateAndCorrectifySearchTerm(c.Param("id")))
 		return c.NoContent(http.StatusOK)
 	}
-}
-
-func validateAndCorrectifySearchTerm(searchString string) string {
-	r, _ := regexp.Compile("[^-a-zåäöA-ZÅÄÖ0-9 ]+")
-	return string(r.ReplaceAll([]byte(searchString), []byte(""))[:])
 }

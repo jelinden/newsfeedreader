@@ -1,7 +1,9 @@
-{{define "login"}}<html>
+{{define "login"}}<!DOCTYPE html>
+<html lang="{{ if eq .Lang `fi` }}fi{{ else }}en{{ end }}">
 <head>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, user-scalable=no" />
+		{{ template "theme_script" }}
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	{{ linktag "public/css/uutispuro.css" "rel" "preload" "as" "style" "type" "text/css"}}
 	{{ linktag "public/css/uutispuro.css" "rel" "stylesheet"}}
 	<meta name="description" content="{{ if eq .Lang `fi` }}Kirjaudu{{ else }}Login{{ end }} - Uusimmat uutiset - www.uutispuro.fi" />
@@ -14,13 +16,14 @@
 	<title>{{ if eq .Lang `fi` }}Kirjaudu{{ else }}Login{{ end }} - Uutiset rss syötteistä, uutishaku ja mediaseuranta</title>
 </head>
 <body>
+		{{ template "skip_link" . }}
 	<div id="layout">
-	    {{ template "menu_fi" }}
-		{{ template "top_bar" . }}
+	    {{ template "header" . }}
+		{{ template "menu_fi" }}
 		<h1 class="loginTitle">
 			{{ if eq .Lang "fi" }}Kirjaudu / Rekisteröidy{{ else }}Login / Signup{{ end }}
 		</h1>
-		<div class="flex-display row-wrap head">
+		<div id="main" class="formRow">
 			<div class="login">
 				<form method="POST" action="/login" class="pure-form pure-form-stacked">
 					<legend>{{ if eq .Lang "fi" }}Kirjaudu{{ else }}Login{{ end }}</legend>
@@ -40,6 +43,7 @@
 			</div>
 		 </div>
 	</div>
+	{{ template "siteinfo" . }}
 	{{ template "scripts" . }}
 </body>
 </html>

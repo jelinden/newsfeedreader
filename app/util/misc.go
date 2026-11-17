@@ -1,17 +1,10 @@
 package util
 
 import (
-	"time"
 	"unicode"
 
 	"github.com/jelinden/newsfeedreader/app/domain"
 )
-
-func DoEvery(d time.Duration, f func(time.Time)) {
-	for x := range time.Tick(d) {
-		f(x)
-	}
-}
 
 func AddCategoryEnNames(items []domain.RSS) []domain.RSS {
 	for i := range items {

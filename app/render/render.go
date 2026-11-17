@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"html/template"
 	"log"
-	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/jelinden/newsfeedreader/app/domain"
@@ -26,156 +24,92 @@ type (
 	}
 )
 
-func NewRender(mongo *service.Mongo) *Render {
-	render := &Render{}
-	render.Mongo = mongo
-	newStatic, _ := asset.NewStatic("", "./manifest.json")
-	render.static = newStatic
-	render.t = &Template{
-		templates: template.Must(template.New("").Funcs(newStatic.FuncMap()).Funcs(template.FuncMap{
-			"minus": func(a, b int) int {
-				return a - b
-			},
-			"add": func(a, b int) int {
-				return a + b
-			},
-			"toLower": strings.ToLower,
-		}).ParseGlob("public/html/*")),
+const pageSize = 30
+
+func NewRender(mongo *service.Mongo) (*Render, error) {
+	newStatic, err := asset.NewStatic("", "./manifest.json")
+	if err != nil {
+		return nil, err
 	}
-	return render
+	funcs := newStatic.FuncMap()
+	funcs["minus"] = func(a, b int) int { return a - b }
+	funcs["add"] = func(a, b int) int { return a + b }
+	funcs["toLower"] = strings.ToLower
+
+	templates, err := template.New("").Funcs(funcs).ParseGlob("public/html/*")
+	if err != nil {
+		return nil, err
+	}
+	return &Render{
+		Mongo:  mongo,
+		t:      &Template{templates: templates},
+		static: newStatic,
+	}, nil
 }
 
 func (r *Render) Index(name string, lang string, page int, c echo.Context, statusCode int) error {
-	return r.render(http.StatusOK, r.RenderIndex(name, lang, strconv.Itoa(page)), c)
-}
-
-func (r *Render) RenderIndex(params ...string) []byte {
-	p, _ := strconv.Atoi(params[2])
-	buf := r.getIndexTemplate(params[0], params[1], p)
-	return buf.Bytes()
-}
-
-func (r *Render) getIndexTemplate(name string, lang string, page int) bytes.Buffer {
-	var buf bytes.Buffer
-	rssList := r.Mongo.FetchRssItems(lang, page, 30)
-	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
-	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
-		Page:         page,
-		Lang:         lang,
-		ResultCount:  len(rssList),
-		RSS:          rssList,
-		MostReadList: mostReadList,
-	})
-	if err != nil {
-		log.Println("rendering page", name, "failed.", err.Error())
-	}
-	return buf
+	rssList := r.Mongo.FetchRssItems(lang, page, pageSize)
+	news := r.baseNews(lang, page)
+	news.ResultCount = len(rssList)
+	news.RSS = rssList
+	return r.renderPage(name, news, c, statusCode)
 }
 
 func (r *Render) Login(name string, lang string, c echo.Context, statusCode int) error {
-	buf := r.RenderLogin(name, lang)
-	return r.render(http.StatusOK, buf.Bytes(), c)
-}
-
-func (r *Render) RenderLogin(name string, lang string) bytes.Buffer {
-	return r.getLoginTemplate(name, lang)
-}
-
-func (r *Render) getLoginTemplate(name string, lang string) bytes.Buffer {
-	var buf bytes.Buffer
-	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
-	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
-		Lang:         lang,
-		MostReadList: mostReadList,
-	})
-	if err != nil {
-		log.Println("rendering page", name, "failed.", err.Error())
-	}
-	return buf
+	return r.renderPage(name, r.baseNews(lang, 0), c, statusCode)
 }
 
 func (r *Render) RenderSearch(name string, lang string, searchString string, page int, c echo.Context, statusCode int) error {
-	var buf bytes.Buffer
-	rssList := r.Mongo.Search(searchString, lang, page, 30)
-	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
-	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
-		Page:         page,
-		Lang:         lang,
-		ResultCount:  len(rssList),
-		SearchQuery:  searchString,
-		RSS:          rssList,
-		MostReadList: mostReadList,
-	})
-	if err != nil {
-		log.Println("rendering page", name, "failed.", err.Error())
-		return err
-	}
-	return r.render(http.StatusOK, buf.Bytes(), c)
+	rssList := r.Mongo.Search(searchString, lang, page, pageSize)
+	news := r.baseNews(lang, page)
+	news.ResultCount = len(rssList)
+	news.SearchQuery = searchString
+	news.RSS = rssList
+	return r.renderPage(name, news, c, statusCode)
 }
 
 func (r *Render) ByCategory(name string, lang string, category string, page int, c echo.Context, statusCode int) error {
-	return r.render(http.StatusOK, r.RenderByCategory(name, lang, category, strconv.Itoa(page)), c)
-}
-
-func (r *Render) RenderByCategory(params ...string) []byte {
-	p, _ := strconv.Atoi(params[3])
-	return r.getCategoryTemplate(params[0], params[1], params[2], p).Bytes()
-}
-
-func (r *Render) getCategoryTemplate(name string, lang string, category string, page int) *bytes.Buffer {
-	var buf bytes.Buffer
-	rssList := r.Mongo.FetchRssItemsByCategory(lang, category, page, 30)
-	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
-	var catEn string
+	rssList := r.Mongo.FetchRssItemsByCategory(lang, category, page, pageSize)
+	news := r.baseNews(lang, page)
+	news.ResultCount = len(rssList)
+	news.Category = category
 	if lang == "en" {
-		catEn = util.EnCategoryName(category)
+		news.CategoryEnName = util.EnCategoryName(category)
 	}
-	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
-		Page:           page,
-		Lang:           lang,
-		ResultCount:    len(rssList),
-		Category:       category,
-		CategoryEnName: catEn,
-		RSS:            rssList,
-		MostReadList:   mostReadList,
-	})
-	if err != nil {
-		log.Println("rendering page", name, "failed.", err.Error())
-	}
-	return &buf
+	news.RSS = rssList
+	return r.renderPage(name, news, c, statusCode)
 }
 
 func (r *Render) BySource(name string, lang string, source string, page int, c echo.Context, statusCode int) error {
-	return r.render(http.StatusOK, r.RenderBySource(name, lang, source, strconv.Itoa(page)), c)
-
+	rssList := r.Mongo.FetchRssItemsBySource(lang, source, page, pageSize)
+	news := r.baseNews(lang, page)
+	news.ResultCount = len(rssList)
+	news.Source = source
+	news.RSS = rssList
+	return r.renderPage(name, news, c, statusCode)
 }
 
-func (r *Render) RenderBySource(params ...string) []byte {
-	p, _ := strconv.Atoi(params[3])
-	return r.getSourceTemplate(params[0], params[1], params[2], p).Bytes()
-}
-
-func (r *Render) getSourceTemplate(name string, lang string, source string, page int) *bytes.Buffer {
-	var buf bytes.Buffer
-	rssList := r.Mongo.FetchRssItemsBySource(lang, source, page, 30)
-	mostReadList := r.Mongo.MostReadWeekly(lang, 0, 5)
-	err := r.t.templates.ExecuteTemplate(&buf, name, &domain.News{
+// baseNews fills the parts of the payload every page shares.
+func (r *Render) baseNews(lang string, page int) *domain.News {
+	return &domain.News{
 		Page:         page,
 		Lang:         lang,
-		ResultCount:  len(rssList),
-		Source:       source,
-		RSS:          rssList,
-		MostReadList: mostReadList,
-	})
-	if err != nil {
-		log.Println("rendering page", name, "failed.", err.Error())
+		MostReadList: r.Mongo.MostReadWeekly(lang, 5),
 	}
-	return &buf
 }
 
-func (r *Render) render(code int, data []byte, c echo.Context) (err error) {
+func (r *Render) renderPage(name string, news *domain.News, c echo.Context, statusCode int) error {
+	var buf bytes.Buffer
+	if err := r.t.templates.ExecuteTemplate(&buf, name, news); err != nil {
+		log.Println("rendering page", name, "failed.", err.Error())
+		return err
+	}
+	return r.render(statusCode, buf.Bytes(), c)
+}
+
+func (r *Render) render(code int, data []byte, c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTMLCharsetUTF8)
 	c.Response().WriteHeader(code)
-	c.Response().Write(data)
-	return
+	_, err := c.Response().Write(data)
+	return err
 }

@@ -1,14 +1,17 @@
 {{ define "mostread_en" }}
 <div id="mostreadweek">
-	<div class="mostreadtitle">Most read</div><div class="mostreadclicks">Clicks</div>
+	<div class="mostreadhead">
+		<div class="mostreadtitle">Most read</div>
+		<div class="mostreadclicks">Clicks</div>
+	</div>
 	{{ range .MostReadList }}
 		<div class="mostread">
 			<div class="date">{{ .PubDate.Local.Format "02.01. 15:04" }}</div><!--
 		 --><div class="source">{{ .RssSource }}</div><!--
-		 --><div class="category"><a href="/fi/category/{{ toLower .Category.CategoryName }}/0" hreflang="en">{{ .Category.CategoryEnName }}</a></div><!--
+		 --><div class="category"><a href="/en/category/{{ toLower .Category.CategoryName }}/0" hreflang="en">{{ .Category.CategoryEnName }}</a></div><!--
 		 --><div class="clicks">{{ .Clicks }}</div>
 			<div class="link">
-			   <a class="itemClick" class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}" hreflang="en">{{ .RssTitle }}</a>
+			   <a class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}" hreflang="en">{{ .RssTitle }}</a>
 			</div>
 	   </div>
 	{{end}}

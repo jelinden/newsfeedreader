@@ -1,66 +1,79 @@
 package middleware
 
 import (
-	"fmt"
+	"encoding/json"
 	"log"
-	"net"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pquerna/ffjson/ffjson"
 )
 
-// Logger is our custom logger
-func Logger() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
+// Logger writes one JSON line per request to the given file (opened once).
+// The returned LogCloser must be closed on shutdown.
+type LogCloser struct {
+	logger *log.Logger
+	file   *os.File
+}
+
+func (l *LogCloser) Close() error {
+	if l == nil || l.file == nil {
+		return nil
+	}
+	return l.file.Close()
+}
+
+func Logger(logPath string) (echo.MiddlewareFunc, *LogCloser, error) {
+	closer := &LogCloser{}
+	if logPath != "" {
+		f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			return nil, nil, err
+		}
+		closer.file = f
+		closer.logger = log.New(f, "", 0)
+	} else {
+		closer.logger = log.Default()
+	}
+
+	// c.RealIP() is used instead of reading X-Real-IP / X-Forwarded-For
+	// directly: client-supplied headers must never be trusted verbatim.
+	// Configure echo.IPExtractor if running behind a reverse proxy.
+	middleware := func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			start := time.Now()
 			req := c.Request()
-			res := c.Response()
 
-			remoteAddr := req.RemoteAddr
-			if ip := req.Header.Get(echo.HeaderXRealIP); ip != "" {
-				remoteAddr = ip
-			} else if ip = req.Header.Get(echo.HeaderXForwardedFor); ip != "" {
-				remoteAddr = ip
-			} else {
-				remoteAddr, _, _ = net.SplitHostPort(remoteAddr)
-			}
-
-			resp := next(c)
-
-			method := req.Method
-			path := req.URL.Path
-			if path == "" {
-				path = "/"
-			}
-			size := res.Size
-			code := strconv.Itoa(res.Status)
+			err := next(c)
 
 			stop := time.Now()
+			res := c.Response()
 			logLine := map[string]string{
-				"date":          time.Now().UTC().Format("2006/01/02 15:04:05"),
-				"ip":            remoteAddr,
-				"method":        method,
-				"path":          path,
-				"status":        code,
-				"response-time": fmt.Sprintf("%.3fms", float64(stop.Sub(start).Nanoseconds())/(1e6*1.0)),
-				"size":          fmt.Sprintf("%v", size),
+				"date":          stop.UTC().Format("2006-01-02 15:04:05"),
+				"ip":            c.RealIP(),
+				"method":        req.Method,
+				"path":          requestPath(req),
+				"status":        strconv.Itoa(res.Status),
+				"response-time": strconv.FormatFloat(float64(stop.Sub(start).Nanoseconds())/1e6, 'f', 3, 64),
+				"size":          strconv.FormatInt(res.Size, 10),
 			}
-			buf, _ := ffjson.Marshal(&logLine)
-
-			f, err := os.OpenFile("access.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-			if err != nil {
-				log.Printf("error opening file: %v", err)
+			buf, marshalErr := json.Marshal(logLine)
+			if marshalErr != nil {
+				log.Println("log marshal error:", marshalErr)
+				return err
 			}
-			defer f.Close()
-			logger := log.New(f, "", 0)
-			logger.SetOutput(f)
-
-			logger.Println(string(buf))
-			return resp
+			closer.logger.Println(string(buf))
+			return err
 		}
 	}
+	return middleware, closer, nil
+}
+
+func requestPath(req *http.Request) string {
+	if req.URL.Path == "" {
+		return "/"
+	}
+	return req.URL.Path
 }

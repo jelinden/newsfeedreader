@@ -1,8 +1,10 @@
-{{define "index_fi"}}<html>
+{{define "index_fi"}}<!DOCTYPE html>
+<html lang="fi">
 
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, user-scalable=no" />
+		{{ template "theme_script" }}
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		{{ linktag "public/css/uutispuro.css" "rel" "preload" "as" "style" "type" "text/css"}}
 		{{ linktag "public/css/uutispuro.css" "rel" "stylesheet"}}
 		<meta name="description" content="Uutiset, uutishaku ja mediaseuranta rss syötteistä, talous, media, digi, kulttuuri, viihde - www.uutispuro.fi" />
@@ -18,9 +20,10 @@
 	</head>
 
 	<body>
+		{{ template "skip_link" . }}
 		<div id="layout">
+			{{ template "header" . }}
 			{{ template "menu_fi" }}
-			{{ template "top_bar" . }}
 			<h1 class="searchTitle">
 				Uusimmat uutiset
 			</h1>
@@ -40,11 +43,14 @@
 										{{ if eq .Category.CategoryName "Naisetjamuoti" }}Naiset ja muoti{{else }}{{ .Category.CategoryName }}{{ end }}</a>
 								</div>
 								<div class="link">
-									<a class="itemClick" class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}"
+									<a class="itemClick" target="_blank" id="{{ .Id.Hex }}" href="{{ .RssLink }}"
 										hreflang="fi">{{ .RssTitle }}</a>
 								</div>
 							</div>
 							{{end}}
+							{{ if eq .ResultCount 0 }}
+							<p class="empty">{{ if eq .Lang `fi` }}Uutisia ei löytynyt.{{ else }}No news found.{{ end }}</p>
+							{{ end }}
 						</div>
 						<div class="paging">
 							{{ if gt .Page 0 }}<span class="prev"><a href="/fi/{{ minus .Page 1 }}">Edelliset</a></span>{{ end }}
@@ -59,6 +65,7 @@
 					</div>
 				</div>
 			</div>
+		{{ template "siteinfo" . }}
 		</div>
 		{{ template "scripts" . }}
 	</body>

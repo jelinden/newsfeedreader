@@ -1,0 +1,20 @@
+{
+  "usedDirs": ["public/html", "public/js"],
+  "assets": [
+    {
+      "key": "public/css/uutispuro.css",
+      "type": "css",
+      "sources": [
+        "public/css/pure-0.6.0.css",
+        "public/css/uutispuro.css"
+      ]
+    },
+    {
+      "key": "public/js/uutispuro.js",
+      "type": "js",
+      "sources": [
+        "public/js/uutispuro.js"
+      ]
+    }
+  ]
+}

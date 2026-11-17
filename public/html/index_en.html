@@ -1,8 +1,10 @@
-{{define "index_en"}}<html>
+{{define "index_en"}}<!DOCTYPE html>
+<html lang="en">
 
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, user-scalable=no" />
+		{{ template "theme_script" }}
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		{{ linktag "public/css/uutispuro.css" "rel" "preload" "as" "style" "type" "text/css"}}
 		{{ linktag "public/css/uutispuro.css" "rel" "stylesheet"}}
 		<meta name="description" content="Latest news from rss feeds, business, economy, travel, digital media - www.uutispuro.fi" />
@@ -18,9 +20,10 @@
 	</head>
 
 	<body>
+		{{ template "skip_link" . }}
 		<div id="layout">
+			{{ template "header" . }}
 			{{ template "menu_en" }}
-			{{ template "top_bar" . }}
 			<h1 class="searchTitle">
 				Latest news
 			</h1>
@@ -42,6 +45,9 @@
 								</div>
 							</div>
 							{{end}}
+							{{ if eq .ResultCount 0 }}
+							<p class="empty">{{ if eq .Lang `fi` }}Uutisia ei löytynyt.{{ else }}No news found.{{ end }}</p>
+							{{ end }}
 						</div>
 						<div class="paging">
 							{{ if gt .Page 0 }}<span class="prev"><a href="/en/{{ minus .Page 1 }}">Previous</a></span>{{ end }}
@@ -56,6 +62,7 @@
 					</div>
 				</div>
 			</div>
+		{{ template "siteinfo" . }}
 		</div>
 		{{ template "scripts" . }}
 	</body>

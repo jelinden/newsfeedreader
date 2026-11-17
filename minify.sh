@@ -1,19 +1,14 @@
-#!bin/bash
-DATE_STRING=$(date +"%s")
-echo "deleting old minified files"
-rm public/css/*.min.css
-rm public/js/*.min.js
-echo "minifying new files"
-cd public/css
-purifycss pure-0.6.0.css uutispuro.css ../js/uutispuro.js ../html/*.html ../html/*.tmpl --min --info --out uutispuro-purified.min.css
-yuicompressor uutispuro-purified.min.css > uutispuro-$DATE_STRING.min.css
-#yuicompressor uutispuro.css >> uutispuro-$DATE_STRING.min.css
-cd ../js
-yuicompressor uutispuro.js > uutispuro-$DATE_STRING.min.js
-cd ../..
-echo "creating manifest file"
-echo "{
-  \"public/css/uutispuro.css\": \"public/css/uutispuro-$DATE_STRING.min.css\",
-  \"public/js/uutispuro.js\": \"public/js/uutispuro-$DATE_STRING.min.js\"
-}" > manifest.json
-cat manifest.json
+#!/usr/bin/env bash
+# Regenerates the fingerprinted css/js artifacts and manifest.json.
+#
+# The actual work lives in cmd/assets (Go, tdewolff/minify): it concatenates the
+# sources listed in assets.json, drops unused css selectors, minifies, names the
+# output by content hash and rewrites manifest.json. No Java or Node required.
+#
+#   ./minify.sh              build
+#   ./minify.sh -check       verify committed artifacts without writing (CI)
+#   ./minify.sh -purge=false keep every css selector
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+exec go run -mod=vendor ./cmd/assets "$@"

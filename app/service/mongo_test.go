@@ -1,385 +1,119 @@
 package service
 
 import (
-	"context"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/jelinden/newsfeedreader/app/domain"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// TestMostReadWeeklyCaching tests the caching mechanism
-func TestMostReadWeeklyCaching(t *testing.T) {
-	// Create a mock Mongo instance
-	m := &Mongo{
+func newTestMongo(ttl time.Duration) *Mongo {
+	return &Mongo{
 		mostReadCache:       make(map[string][]domain.RSS),
 		mostReadCacheExpiry: make(map[string]time.Time),
-		mostReadCacheTTL:    1 * time.Hour,
-	}
-
-	// Test 1: Cache returns nil when empty
-	cacheKey := "fi"
-	m.mostReadCacheMutex.RLock()
-	_, exists := m.mostReadCache[cacheKey]
-	m.mostReadCacheMutex.RUnlock()
-
-	if exists {
-		t.Error("Cache should be empty initially")
-	}
-
-	// Test 2: Store in cache
-	testData := []domain.RSS{
-		{RssTitle: "Test News 1", Language: "fi"},
-		{RssTitle: "Test News 2", Language: "fi"},
-	}
-
-	m.mostReadCacheMutex.Lock()
-	m.mostReadCache[cacheKey] = testData
-	m.mostReadCacheExpiry[cacheKey] = time.Now().Add(1 * time.Hour)
-	m.mostReadCacheMutex.Unlock()
-
-	// Test 3: Retrieve from cache
-	m.mostReadCacheMutex.RLock()
-	cached, exists := m.mostReadCache[cacheKey]
-	expiry := m.mostReadCacheExpiry[cacheKey]
-	m.mostReadCacheMutex.RUnlock()
-
-	if !exists {
-		t.Error("Cache should contain stored data")
-	}
-
-	if len(cached) != 2 {
-		t.Errorf("Expected 2 cached items, got %d", len(cached))
-	}
-
-	if !time.Now().Before(expiry) {
-		t.Error("Cache expiry should be in the future")
-	}
-
-	// Test 4: Check cache expiry
-	m.mostReadCacheMutex.Lock()
-	m.mostReadCacheExpiry[cacheKey] = time.Now().Add(-1 * time.Hour) // Expired
-	m.mostReadCacheMutex.Unlock()
-
-	m.mostReadCacheMutex.RLock()
-	_, isValid := m.mostReadCache[cacheKey]
-	expiry = m.mostReadCacheExpiry[cacheKey]
-	m.mostReadCacheMutex.RUnlock()
-
-	if isValid && !time.Now().Before(expiry) {
-		t.Log("Cache correctly identified as expired")
+		mostReadCacheTTL:    ttl,
 	}
 }
 
-// TestCacheThreadSafety tests concurrent cache access
-func TestCacheThreadSafety(t *testing.T) {
-	m := &Mongo{
-		mostReadCache:       make(map[string][]domain.RSS),
-		mostReadCacheExpiry: make(map[string]time.Time),
-		mostReadCacheTTL:    1 * time.Hour,
+func TestCacheGetMissAndHit(t *testing.T) {
+	m := newTestMongo(1 * time.Hour)
+
+	if _, ok := m.cacheGet("fi"); ok {
+		t.Error("empty cache must report a miss")
 	}
 
-	var wg sync.WaitGroup
-	errors := make(chan error, 100)
-	testData := []domain.RSS{{RssTitle: "Test", Language: "fi"}}
+	data := []domain.RSS{{RssTitle: "Test", Language: "fi"}}
+	m.cacheSet("fi", data)
 
-	// Concurrent writes
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-			m.mostReadCacheMutex.Lock()
-			m.mostReadCache["fi"] = testData
-			m.mostReadCacheExpiry["fi"] = time.Now().Add(1 * time.Hour)
-			m.mostReadCacheMutex.Unlock()
-		}(i)
-	}
-
-	// Concurrent reads
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-			m.mostReadCacheMutex.RLock()
-			_, exists := m.mostReadCache["fi"]
-			m.mostReadCacheMutex.RUnlock()
-			if !exists {
-				errors <- nil // This is ok, cache may not be populated yet
-			}
-		}(i)
-	}
-
-	wg.Wait()
-	close(errors)
-
-	if len(errors) > 0 {
-		t.Logf("Concurrent access test completed with %d non-critical issues (expected)", len(errors))
-	}
-}
-
-// TestIndexesCreation verifies index structure
-func TestIndexesCreation(t *testing.T) {
-	m := &Mongo{
-		indexesCreated: false,
-	}
-
-	// Test 1: Flag starts as false
-	if m.indexesCreated {
-		t.Error("indexesCreated should be false initially")
-	}
-
-	// Test 2: Simulate index creation completion
-	m.indexesMutex.Lock()
-	m.indexesCreated = true
-	m.indexesMutex.Unlock()
-
-	m.indexesMutex.Lock()
-	if !m.indexesCreated {
-		t.Error("indexesCreated should be true after creation")
-	}
-	m.indexesMutex.Unlock()
-
-	// Test 3: Prevent duplicate index creation
-	created := false
-	m.indexesMutex.Lock()
-	if m.indexesCreated {
-		created = false // Would skip in actual code
-	} else {
-		created = true
-	}
-	m.indexesMutex.Unlock()
-
-	if created {
-		t.Error("Should not create indexes twice")
-	}
-}
-
-// TestContextTimeout tests context timeout implementation
-func TestContextTimeout(t *testing.T) {
-	// Test 1: Create context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if ctx == nil {
-		t.Error("Context should not be nil")
-	}
-
-	// Test 2: Verify timeout is set
-	deadline, ok := ctx.Deadline()
+	got, ok := m.cacheGet("fi")
 	if !ok {
-		t.Error("Context should have a deadline")
+		t.Fatal("cacheGet should hit after cacheSet")
 	}
-
-	// Deadline should be approximately 5 seconds in future
-	diff := time.Until(deadline)
-	if diff < 4*time.Second || diff > 6*time.Second {
-		t.Errorf("Expected deadline ~5s, got %v", diff)
-	}
-
-	// Test 3: Timeout cancellation
-	fastCtx, fastCancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	time.Sleep(200 * time.Millisecond)
-
-	select {
-	case <-fastCtx.Done():
-		t.Log("Context correctly timed out")
-	default:
-		t.Error("Context should have timed out")
-	}
-	fastCancel()
-}
-
-// TestCacheHTTL verifies cache TTL behavior
-func TestCacheTTL(t *testing.T) {
-	m := &Mongo{
-		mostReadCache:       make(map[string][]domain.RSS),
-		mostReadCacheExpiry: make(map[string]time.Time),
-		mostReadCacheTTL:    100 * time.Millisecond, // Short TTL for testing
-	}
-
-	testData := []domain.RSS{{RssTitle: "Test", Language: "fi"}}
-
-	// Store in cache
-	m.mostReadCacheMutex.Lock()
-	m.mostReadCache["fi"] = testData
-	m.mostReadCacheExpiry["fi"] = time.Now().Add(m.mostReadCacheTTL)
-	m.mostReadCacheMutex.Unlock()
-
-	// Verify it's valid immediately
-	m.mostReadCacheMutex.RLock()
-	_, exists := m.mostReadCache["fi"]
-	isValid := time.Now().Before(m.mostReadCacheExpiry["fi"])
-	m.mostReadCacheMutex.RUnlock()
-
-	if !exists || !isValid {
-		t.Error("Cache should be valid immediately after creation")
-	}
-
-	// Wait for TTL to expire
-	time.Sleep(150 * time.Millisecond)
-
-	m.mostReadCacheMutex.RLock()
-	_, exists = m.mostReadCache["fi"]
-	isValid = time.Now().Before(m.mostReadCacheExpiry["fi"])
-	m.mostReadCacheMutex.RUnlock()
-
-	if exists && !isValid {
-		t.Log("Cache correctly expired after TTL")
-	} else if !exists {
-		t.Error("Cache entry should still exist, only marked as expired")
+	if len(got) != 1 || got[0].RssTitle != "Test" {
+		t.Errorf("unexpected cached data: %+v", got)
 	}
 }
 
-// TestMultiLanguageCaching tests separate caches for different languages
-func TestMultiLanguageCaching(t *testing.T) {
-	m := &Mongo{
-		mostReadCache:       make(map[string][]domain.RSS),
-		mostReadCacheExpiry: make(map[string]time.Time),
-		mostReadCacheTTL:    1 * time.Hour,
+func TestCacheExpiry(t *testing.T) {
+	m := newTestMongo(50 * time.Millisecond)
+	m.cacheSet("fi", []domain.RSS{{RssTitle: "Test"}})
+
+	if _, ok := m.cacheGet("fi"); !ok {
+		t.Error("cache should be fresh immediately after set")
 	}
-
-	// Store different data for different languages
-	fiData := []domain.RSS{{RssTitle: "Finnish News", Language: "fi"}}
-	enData := []domain.RSS{{RssTitle: "English News", Language: "en"}}
-
-	m.mostReadCacheMutex.Lock()
-	m.mostReadCache["fi"] = fiData
-	m.mostReadCache["en"] = enData
-	m.mostReadCacheExpiry["fi"] = time.Now().Add(1 * time.Hour)
-	m.mostReadCacheExpiry["en"] = time.Now().Add(1 * time.Hour)
-	m.mostReadCacheMutex.Unlock()
-
-	// Verify separate caches
-	m.mostReadCacheMutex.RLock()
-	fi, fiExists := m.mostReadCache["fi"]
-	en, enExists := m.mostReadCache["en"]
-	m.mostReadCacheMutex.RUnlock()
-
-	if !fiExists || !enExists {
-		t.Error("Both language caches should exist")
-	}
-
-	if len(fi) != 1 || fi[0].RssTitle != "Finnish News" {
-		t.Error("Finnish cache has wrong data")
-	}
-
-	if len(en) != 1 || en[0].RssTitle != "English News" {
-		t.Error("English cache has wrong data")
-	}
-
-	t.Log("Multi-language caching works correctly")
-}
-
-// BenchmarkCacheAccess benchmarks cache read performance
-func BenchmarkCacheAccess(b *testing.B) {
-	m := &Mongo{
-		mostReadCache:       make(map[string][]domain.RSS),
-		mostReadCacheExpiry: make(map[string]time.Time),
-		mostReadCacheTTL:    1 * time.Hour,
-	}
-
-	testData := []domain.RSS{{RssTitle: "Test", Language: "fi"}}
-	m.mostReadCacheMutex.Lock()
-	m.mostReadCache["fi"] = testData
-	m.mostReadCacheExpiry["fi"] = time.Now().Add(1 * time.Hour)
-	m.mostReadCacheMutex.Unlock()
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m.mostReadCacheMutex.RLock()
-		_, _ = m.mostReadCache["fi"]
-		m.mostReadCacheMutex.RUnlock()
+	time.Sleep(80 * time.Millisecond)
+	if _, ok := m.cacheGet("fi"); ok {
+		t.Error("cache entry should have expired")
 	}
 }
 
-// BenchmarkCacheWrite benchmarks cache write performance
-func BenchmarkCacheWrite(b *testing.B) {
-	m := &Mongo{
-		mostReadCache:       make(map[string][]domain.RSS),
-		mostReadCacheExpiry: make(map[string]time.Time),
-		mostReadCacheTTL:    1 * time.Hour,
+// TestCacheGetReturnsIsolatedData verifies the bug where callers received the
+// shared cached slice and AddCategoryEnNames mutated it concurrently.
+func TestCacheGetReturnsIsolatedData(t *testing.T) {
+	m := newTestMongo(1 * time.Hour)
+	m.cacheSet("en", []domain.RSS{{RssTitle: "Test", Category: domain.Category{CategoryName: "Digi"}}})
+
+	cached, _ := m.cacheGet("en")
+	first := copyRSS(cached)
+	second := copyRSS(cached)
+
+	// Simulate what the request path does: mutate one copy...
+	first[0].Category.CategoryEnName = "Digital media"
+	if second[0].Category.CategoryEnName != "" {
+		t.Error("mutating one returned copy affected another (shared backing array)")
 	}
-
-	testData := []domain.RSS{{RssTitle: "Test", Language: "fi"}}
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m.mostReadCacheMutex.Lock()
-		m.mostReadCache["fi"] = testData
-		m.mostReadCacheExpiry["fi"] = time.Now().Add(1 * time.Hour)
-		m.mostReadCacheMutex.Unlock()
+	if cached[0].Category.CategoryEnName != "" {
+		t.Error("mutating a copy affected the cache")
 	}
 }
 
-// TestIndexModelStructure verifies index model construction
-func TestIndexModelStructure(t *testing.T) {
-	// Test 1: Language + PubDate Index
-	indexModel1 := mongo.IndexModel{
-		Keys: bson.D{{Key: "language", Value: 1}, {Key: "pubDate", Value: -1}},
+func TestConcurrentCacheAccess(t *testing.T) {
+	// Run with `go test -race` to detect cache data races.
+	m := newTestMongo(1 * time.Hour)
+	var wg sync.WaitGroup
+	for i := 0; i < 16; i++ {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			m.cacheSet("fi", []domain.RSS{{RssTitle: "x"}})
+		}()
+		go func() {
+			defer wg.Done()
+			if got, ok := m.cacheGet("fi"); ok {
+				_ = copyRSS(got)
+			}
+		}()
 	}
-	if indexModel1.Keys == nil {
-		t.Error("Index model 1 keys should not be nil")
-	}
-
-	// Test 2: Language + Category Index
-	indexModel2 := mongo.IndexModel{
-		Keys: bson.D{{Key: "language", Value: 1}, {Key: "category.categoryName", Value: 1}},
-	}
-	if indexModel2.Keys == nil {
-		t.Error("Index model 2 keys should not be nil")
-	}
-
-	// Test 3: Language + Source Index
-	indexModel3 := mongo.IndexModel{
-		Keys: bson.D{{Key: "language", Value: 1}, {Key: "rssSource", Value: 1}},
-	}
-	if indexModel3.Keys == nil {
-		t.Error("Index model 3 keys should not be nil")
-	}
-
-	// Test 4: Language + PubDate + Clicks Index (compound)
-	indexModel4 := mongo.IndexModel{
-		Keys: bson.D{
-			{Key: "language", Value: 1},
-			{Key: "pubDate", Value: -1},
-			{Key: "clicks", Value: -1},
-		},
-	}
-	if indexModel4.Keys == nil {
-		t.Error("Index model 4 keys should not be nil")
-	}
-
-	t.Log("All index models correctly structured")
+	wg.Wait()
 }
 
-// TestMongoStructureFields verifies new struct fields exist
-func TestMongoStructureFields(t *testing.T) {
-	m := &Mongo{
-		mostReadCache:       make(map[string][]domain.RSS),
-		mostReadCacheExpiry: make(map[string]time.Time),
-		mostReadCacheTTL:    1 * time.Hour,
-		indexesCreated:      false,
-	}
+func TestIsValidID(t *testing.T) {
+	valid := []string{"507f1f77bcf86cd799439011"}
+	invalid := []string{"", "zz7f1f77bcf86cd799439011", "507f1f77bcf86cd79943901", "not-an-id"}
 
-	// Test that all new fields are accessible
-	if m.mostReadCache == nil {
-		t.Error("mostReadCache should be initialized")
+	for _, id := range valid {
+		if !IsValidID(id) {
+			t.Errorf("IsValidID(%q) = false, want true", id)
+		}
 	}
-
-	if m.mostReadCacheExpiry == nil {
-		t.Error("mostReadCacheExpiry should be initialized")
+	for _, id := range invalid {
+		if IsValidID(id) {
+			t.Errorf("IsValidID(%q) = true, want false", id)
+		}
 	}
+}
 
-	if m.mostReadCacheTTL != 1*time.Hour {
-		t.Errorf("mostReadCacheTTL should be 1 hour, got %v", m.mostReadCacheTTL)
+// TestSaveClickRejectsInvalidID ensures malformed ids never reach the
+// database (previously an invalid id produced an update with a zero ObjectID).
+func TestSaveClickRejectsInvalidID(t *testing.T) {
+	m := &Mongo{} // no client: any DB access would panic
+	err := m.SaveClick("garbage")
+	if err == nil {
+		t.Fatal("expected error for invalid id")
 	}
-
-	if m.indexesCreated {
-		t.Error("indexesCreated should be false initially")
+	if !strings.Contains(err.Error(), "invalid object id") {
+		t.Errorf("unexpected error: %v", err)
 	}
-
-	t.Log("All Mongo struct fields properly initialized")
 }
