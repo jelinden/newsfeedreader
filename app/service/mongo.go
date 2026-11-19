@@ -52,7 +52,7 @@ func NewMongo(mongoAddress string) (*Mongo, error) {
 		Client:              client,
 		mostReadCache:       make(map[string][]domain.RSS),
 		mostReadCacheExpiry: make(map[string]time.Time),
-		mostReadCacheTTL:    1 * time.Hour,
+		mostReadCacheTTL:    1 * time.Minute,
 	}
 	go m.createIndexes()
 	return m, nil
