@@ -123,7 +123,16 @@ func setupRoutes(e *echo.Echo, app *Application) {
 	// Click tracking and the json api are write/DB heavy endpoints; limit them
 	// per IP so they cannot be used to hammer the database.
 	api := e.Group("/api", rateLimiter(2, 20))
+	// Both methods, because the frontend has two ways to report one click:
+	// navigator.sendBeacon, which is a POST, and the image request it falls back to
+	// where beacons are unavailable or refuse to queue, which is a GET. The rewrite
+	// that introduced the beacon left only the GET registered, and this group carries
+	// per-route middleware (the rate limiter), which makes Echo's router answer a
+	// method mismatch as 404 rather than 405 - so the endpoint looked deleted rather
+	// than mis-methoded. Nothing renders a beacon's response either, so the counters
+	// simply stopped moving.
 	api.GET("/click/:id", routes.Click(app.Mongo))
+	api.POST("/click/:id", routes.Click(app.Mongo))
 	api.GET("/news", routes.News(app.Mongo))
 
 	paths.GET("/public/:filePath/:fileName", static)

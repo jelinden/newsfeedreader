@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -115,7 +116,8 @@ func TestRegisteredRouteShapes(t *testing.T) {
 		"GET /fi/source/:source/:page",
 		"GET /public/:filePath/:fileName",
 		"GET /serviceworker.js",
-		"GET /api/click/:id",
+		"GET /api/click/:id",  // the Image() fallback
+		"POST /api/click/:id", // navigator.sendBeacon
 		"GET /api/news",
 		"GET /ws/:channel",
 	}
@@ -171,4 +173,101 @@ func TestStaticFilesReachableThroughRouter(t *testing.T) {
 	if !strings.Contains(rec.Header().Get("Cache-Control"), "max-age=") {
 		t.Error("expected Cache-Control on static asset")
 	}
+}
+
+// clickScript is the file the browser runs. The route table has to agree with it,
+// and the only way to know that is to read the method out of the script itself.
+const clickScript = "public/js/uutispuro.js"
+
+// TestClickBeaconIsAccepted is the regression the November frontend rewrite shipped:
+// counting a click moved from an XHR GET to navigator.sendBeacon, which is a POST,
+// while the route stayed GET-only.
+//
+// Two things hid it. A route with per-route middleware - the /api group has the rate
+// limiter - is reported by Echo's router as 404 instead of 405, so the endpoint
+// looked as if it had been removed rather than reached with the wrong verb. And no
+// browser shows the response of a beacon, so there was nothing on screen either.
+func TestClickBeaconIsAccepted(t *testing.T) {
+	// Read the script before newTestApp: it changes the working directory.
+	methods := beaconMethods(t)
+	e := newTestApp(t)
+
+	if len(methods) == 0 {
+		t.Fatal("found no click beacon call in " + clickScript + "; the frontend changed shape, update this test")
+	}
+	for _, method := range methods {
+		// The id is deliberately invalid: the handler answers 400 before it touches
+		// the database, so 400 is what "the route matched" looks like here.
+		req := httptest.NewRequest(method, "/api/click/not-an-objectid", nil)
+		rec := httptest.NewRecorder()
+		e.ServeHTTP(rec, req)
+
+		if rec.Code == http.StatusNotFound {
+			t.Errorf("%s /api/click/:id: 404, but %s is how %s reports a click; register that verb on the route",
+				method, method, clickScript)
+			continue
+		}
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("%s /api/click/:id: status = %d, want 400 from the id validation", method, rec.Code)
+		}
+	}
+}
+
+// beaconMethods returns the HTTP methods the frontend uses against the click
+// endpoint, read out of the script itself so the route table cannot drift from it
+// unnoticed again.
+func beaconMethods(t *testing.T) []string {
+	t.Helper()
+	text := clickScriptSource(t)
+	if !strings.Contains(text, "/api/click/") {
+		t.Fatalf("%s does not call /api/click/", clickScript)
+	}
+	var methods []string
+	if strings.Contains(text, "navigator.sendBeacon") {
+		// sendBeacon always issues a POST.
+		methods = append(methods, http.MethodPost)
+	}
+	if regexp.MustCompile(`img\.src\s*=\s*url`).MatchString(text) {
+		// The fallback for browsers without it is an image request, which is a GET.
+		methods = append(methods, http.MethodGet)
+	}
+	return methods
+}
+
+// TestFrontendOnlyCallsRegisteredAPIPaths keeps the script from calling an endpoint
+// that does not exist, which is the same failure one typo away.
+func TestFrontendOnlyCallsRegisteredAPIPaths(t *testing.T) {
+	text := clickScriptSource(t)
+	e := newTestApp(t)
+
+	calls := map[string]bool{}
+	for _, match := range regexp.MustCompile(`"/api/([a-z]+)/`).FindAllStringSubmatch(text, -1) {
+		calls["/api/"+match[1]+"/"] = true
+	}
+	if len(calls) == 0 {
+		t.Fatal("no /api/ calls found in " + clickScript)
+	}
+
+	prefixes := map[string]bool{}
+	for _, r := range e.Routes() {
+		prefixes[r.Path] = true
+		// "/api/click/:id" is reached by any path that starts with "/api/click/".
+		if i := strings.Index(r.Path, ":"); i > 0 {
+			prefixes[r.Path[:i]] = true
+		}
+	}
+	for call := range calls {
+		if !prefixes[call] {
+			t.Errorf("%s calls %s but no route is registered under it", clickScript, call)
+		}
+	}
+}
+
+func clickScriptSource(t *testing.T) string {
+	t.Helper()
+	data, err := os.ReadFile(clickScript)
+	if err != nil {
+		t.Fatalf("read the frontend: %v", err)
+	}
+	return string(data)
 }
